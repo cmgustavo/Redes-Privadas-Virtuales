@@ -1,0 +1,909 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   |-------------------------|                        %
+%   |REDES PRIVADAS VIRTUALES |                        %
+%   |                         |                        %
+%   | Proyecto de graduación  |                        %
+%   |_________________________|                        %
+%                                                      %
+%   Autores                                            %
+%   -------                                            %
+%                                                      %
+% * Formoso Requena, Nicolás Federico (CX02-0239-8)    %
+%     nicolasformoso@gmail.com                         %
+% * Cortez, Gustavo Maximiliano (CX01-0801-9)          %
+%     cmgustavo83@gmail.com                            %
+%                                                      %
+%   Tutores                                            %
+%   -------                                            %
+%                                                      %
+% * Ing. Gustavo Vanetta - vanettag@gmail.com          %
+% * Lic. Miguel Bazzano - miguelbazzano@gmail.com      %
+%                                                      %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% ********* VPN con IPSec ********** %
+
+\chapter{VPN con IPSec}
+\label{chap:vpn_con_ipsec}
+
+IPSec es un conjunto de protocolos que se ha extendido a grandes empresas y se ha vuelto casi un estándar para su utilización con redes privadas virtuales. Además se han portado implementaciones de IPSec para casi todos los sistemas operativos, tales como OpenSWAN para Linux y KAME para los sistemas BSD.
+
+En este capítulo se describirán los conceptos teóricos de IPSec, los métodos de autenticación y además se mostrará la configuración de los archivos más importantes.
+
+También se realizará el proceso de generación de certificados digitales utilizando OpenSSL y la distribución de los mismos. Finalmente se comprobará la conexión establecida y se realizarán pruebas de rendimiento y monitoreo de paquetes.
+
+\section{¿Qué es IPSec?}
+\label{sec:ipsec_introduccion}
+
+\gls{IPSec} es una extensión al protocolo IP que proporciona seguridad a IP y a los protocolos de capas superiores. Fue desarrollado para el estándar \gls{IPv6} y después fue portado a \gls{IPv4}. La arquitectura IPsec se describe en las RFC 2401\footnote{http://www.rfc-es.org/rfc/rfc2401-es.txt}-2412, y se pueden conseguir copias traducidas al castellano de gran candidad de RFC en \cite{rfc}.
+
+El conjunto de protocolos de IPSec opera en la capa de red (capa 3 del modelo OSI) y añade protección a los paquetes IP. La figura \ref{fig:ipsec_modelo_tcp} tomada de \cite{wiki-en}, muestra una lista de protocolos y sus capas con respecto al modelo TCP/IP.
+
+\begin{figure}[htb]
+	\begin{center}
+	\includegraphics{imagenes/ipsec/modelo_tcp}
+	\caption{En este esquema se puede ver claramente el puesto en la pila que opera IPSec.}
+	\label{fig:ipsec_modelo_tcp}
+	\end{center}
+\end{figure}
+
+Los protocolos que emplea IPSec comunmente son \gls{AH} y \gls{ESP}, que en conjunto sirven para asegurar autenticación, integridad, protección contra repetición y confidencialidad de la comunicación. Las funciones específicas para cada característica son las siguientes:
+
+\begin{itemize}
+	\item \textbf{Autenticación}. Verifica la identidad del remitente de un paquete.
+	\item \textbf{Protección de la integridad}. Asegura que los datos no se han cambiado en el transcurso de la comunicación.
+	\item \textbf{Protección contra la repetición}. Evita que un atacante pueda guardar paquetes cifrados y luego repetir los mismos sin ser detectado; obteniendo así, acceso al tráfico encriptado.
+	\item \textbf{Confidencialidad}. Oculta la información que se esta transmitiendo con cifrado mediante claves compartidas entre remitente y destinatario.
+\end{itemize}
+
+Estas características se pueden obtener combinando ambos protocolos (ESP y/o AH) dependiendo del nivel de seguridad que se requiere para la transferencia de datos. Por ejemplo, si se utiliza solo AH se obtienen las tres primeras características pero no ofrece confidencialidad. En cambio ESP puede proveer de todas las características.
+
+Otro protocolo que puede emplear IPSec para el transporte de información es \gls{IPCOMP}, que permite comprimir los datos que se van a transferir para aprovechar el ancho de banda de la conexión. Vemos entonces que se pueden definir diferentes modos para transmitir información utilizando uno o varios de los protocolos mencionados, cada uno con sus ventajas y desventajas:
+
+\begin{itemize}
+	\item Solo AH: Autenticación avanzada, integridad y antirrepetición.
+	\item Solo ESP: Autenticación (opcional), integridad, antirrepetición y cifrado.
+	\item ESP y AH: Autenticación avanzada, integridad, antirrepetición y cifrado.
+	\item ESP e IPCOMP: Autenticación, integridad, antirrepetición, cifrado y compresión.
+	\item AH, ESP e IPCOMP: Autenticación avanzada, integridad, antirrepetición, cifrado y compresión.
+\end{itemize}
+
+Tal como se puede presentir, cuanto más tecnologías se utilizan, se obtiene una mejora de la seguridad en el tráfico de información, pero esto lleva a una alta utilización de procesamiento para las tareas de cifrado y compresión principalmente. Por esta razón no siempre es conveniente utilizar todas las opciones juntas, sino las que se adecúan a nuestras necesidades.
+
+\subsection{Componentes de IPSec}
+
+Como se ha mencionado anteriormente, IPSec esta basado en varios protocolos. Estos se pueden dividir en dos grupos según su función: los relacionados con la \emph{gestión de claves} y los relacionados con la \emph{manipulación de los datos}. La parte de gestión de claves esta comprendida por IKE que esta basado en los protocolos siguientes:
+
+\begin{itemize}
+	\item ISAKMP
+	\item Oakley Key Determination Protocol
+\end{itemize}
+
+En la manipulación de datos se encuentran los protocolos que permiten compresión, cifrado, autenticación y manipulación de paquetes, que ya se han listado anteriormente (y aquí nuevamente):
+
+\begin{itemize}
+	\item \gls{AH}
+	\item \gls{ESP}
+	\item \gls{IPCOMP}
+\end{itemize}
+
+Los protocolos de gestión de claves son los que realizan la negociación entre las partes y almacenan las claves. Además ayudan a establecer las SA de IPSec.
+
+Por otro lado, los protocolos de manipulación de paquetes utilizan las SA para agregar características de seguridad a los paquetes.
+
+\subsection{Modos de transferencia}
+
+IPSec puede utilizar dos modos de transferencia, por lo que puede crear paquetes en dos formatos soportados: transporte y túnel. De esta manera se puede proteger el datagrama IP completo o sólo los protocolos de capas superiores.
+
+En modo túnel el datagrama IP se encapsula completamente dentro de un nuevo datagrama IP que emplea el protocolo IPsec. En modo transporte IPsec sólo maneja la carga del datagrama IP, insertándose la cabecera IPsec entre la cabecera IP y la cabecera del protocolo de capa superior. La figura \ref{fig:ipsec_modos} muestra el diagrama de los diferentes modos.
+
+\begin{figure}[htb]
+	\begin{center}
+	\includegraphics{imagenes/ipsec/tunnel_transport}
+	\caption{Comparación de los modos transporte y túnel junto al paquete original.}
+	\label{fig:ipsec_modos}
+	\end{center}
+\end{figure}
+
+En otras palabras, en el modo \emph{transporte}, IPSec protege los paquetes, encriptando el payload del datagrama IP agregando cabeceras IPSec y los tipos de protección solicitados, entre la información útil, y la cabecera IP original.
+
+En el modo túnel, IPSec trata al paquete entero como un bloque de datos, en el que añade una nueva cabecera y protege los datos haciendo que formen parte de la información útil cifrada del paquete nuevo.
+
+En la práctica se utiliza generalmente el modo transporte para las conexiones de host a host, mientras que si se tratan de puertas de enlaces (conexión red a red) es conveniente utilizar el modo túnel.
+
+\subsection{Protocolos de gestión e intercambio de claves}
+
+Cuando se utilizan bases de datos de asociaciones de seguridad y de normativas de seguridad, se puede pretender configurarlas tanto manual como automáticamente. El modo automático es el más utilizado y se lo lleva a cabo con protocolos de gestión e intercambio de claves para IPSec.
+
+El protocolo IKE resuelve el problema más importante del establecimiento de comunicaciones seguras que es la autenticación de los participantes y el intercambio de claves simétricas. Para lograr este cometido crea las \gls{SA} y rellena la \gls{SAD}. Además este protocolo combina elementos, definiciones y funcionalidades de otros protocolos como \gls{ISAKMP}, \gls{SKEME} y \gls{Oakley} para intercambiar y gestionar claves y SA.
+
+\subsubsection{IKE}
+
+El protocolo IKE permite negociar SA automáticamente y suele implementarse a través de servidores en espacio de usuario, y no en el sistema operativo. Este funciona sobre UDP y emplea el puerto 500 para su comunicación.
+
+IKE ha sido desarrollado para ofrecer protección ante atacantes que pretendan repetir, eliminar o cambiar mensajes. Además soporta \gls{PFS}. Sin esta característica, si una clave esta comprometida, las otras claves y SA pueden resultar afectadas también, por lo tanto, todos los datos cifrados con esa clave. Por eso es recomendable activar esta opción.
+
+El protocolo IKE funciona en dos fases. La Fase I establece una SA de ISAKMP con el propósito de crear un canal seguro para proteger las siguientes negociaciones. En esta fase las negociaciones tienen lugar con menos frecuencia (una vez a la hora o quizás una vez al día) que en la Fase II (una vez cada minuto o cada 1024K de datos cifrados).
+
+En la Fase II, se deben negociar las SA de IPSec utilizadas para proteger el tráfico IP. Todo los mensajes intercambiados en esta fase están protegidos por la Fase I.
+
+\subsubsection{Métodos de autenticación}
+
+La autenticación de los participantes en la Fase I se realiza mediante claves compartidas o firmas digitales.
+
+La autenticación mediante \gls{PSK} utiliza una \emph{clave compartida} que deben tener todas las partes que intervienen en el proceso de autenticación. Este método tiene problemas de seguridad y escalabilidad, ya que el transporte de claves en texto claro a los servidores que estan distanciados físicamente, hacen que la seguridad dependa de terceros (correo electrónico, correo tradicional, mensajería, etc.). Si la clave cae en manos inapropiadas, la seguridad del sistema puede estar muy comprometida, por más que se utilicen los mejores métodos de encriptación y cifrado de datos, ya que el atacante simularía ser un nodo de confianza. Por otro lado, si se disponen de numerosos nodos y se mantiene un plan de cambio de claves de forma regular, distribuir las claves por tantos servidores, tiene un costo agregado en la administración de VPN de gran tamaño.
+
+El uso de \emph{firmas digitales} (RSS o RSA) permite firmar los datos con la clave privada, que luego es verificada mediante la clave pública del par. De esta manera se verifica la identidad de quien solicita la conexión. Con este método se mejora el problema de la distribución de claves, mediante la utilización de certificados digitales sabiendo que se puede confiar en un tercero para que asocie la identidad del par con su clave pública. Se considera este método mejor que el de intercambio directo de claves públicas.
+
+En la Sección \ref{sec:ipsec_metodos_de_autenticacion} se detallan estos métodos y se proporcionan ejemplos concretos.
+
+\subsubsection{Fundamentos de la Fase I}
+
+El protocolo IKE realiza varias operaciones importantes, como la de negociar los parámetros y protocolos criptográficos que se utilizan para la autenticación y cifrado. Además se autentican los equipos mediante los algoritmos negociados. Por último se establece un secreto compartido basado en la información intercambiada. De esta manera se consigue un canal seguro al finalizar la Fase I. Los modos posibles en esta fase son:
+
+\begin{itemize}
+	\item Modo principal.
+	\item Modo agresivo.
+	\item Modo base.
+\end{itemize}
+
+En el \index{Modo principal} se intercambian seis datagramas UDP, y si los host A y B son los que dicen ser, el primer mensaje hace una propuesta y ofrece una lista de protocolos alternativos para que B elija. En el segundo mensaje, B devuelve los protocolos que quiere utilizar junto con otra información.
+
+En los siguientes mensajes, los hosts intercambian material clave y establecen las claves compartidas, y por último se autentican mutuamente utilizando el método de autenticación seleccionado en los primeros mensajes.
+
+En el \index{Modo agresivo} se transmiten tres datagramas UDP, por lo que hacen falta menos paquetes para establecer una SA de ISAKMP en la Fase I que en el Modo principal. Entre las ventajas de este modo se encuentran:
+
+\begin{itemize}
+	\item Disminución del número de mensajes.
+	\item Posibilidad de asociar identidad (no solo dirección IP) con una clave precompartida específica o con una normativa de seguridad.
+\end{itemize}
+
+El inconveniente de este modo es que realiza cálculos que consumen recursos del sistema inmediatamente, en respuesta al primer mensaje. Esto significa que un atacante puede enviar una cantidad considerable de propuestas con direcciones IP falsas, lo que podría afectar al rendimiento del sistema y conducir a una denegación de servicio. Además cabe señalar que el grupo de trabajo de IPSec esta considerando eliminar este modo.
+
+Por último, el \index{Modo base} fue desarrollado para sacar partido a las ventajas del modo agresivo y subsanar sus desventajas. En este modo se envian cuatro datagramas UDP. Además, este modo propone el establecimiento de claves computacionalmente intensivas hasta que se recibe una respuesta de la parte iniciadora para confirmar su existencia.
+
+Sin embargo, el modo base no trata todos los problemas del modo agresivo, por ejemplo, a menos que se utilice cifrado de clave pública, la identidad de las partes comunicantes no esta protegida. Esto es así, porque las claves compartidas se calculan después de que los hosts hayan intercambiado y verificado su información de identidad.
+
+\subsubsection{Fundamentos de la Fase II}
+
+Luego de haber finalizado las negociaciones en la Fase I, los hosts deben compartir una SA de ISAKMP nueva, para proteger las subsecuentes negociacioes de la Fase II.
+
+El protocolo de negociación de esta fase se denomina \index{Modo rápido} (QM), que consta de tres mensajes y permite negociar una o más SA de IPSec. Cualquier host puede iniciar las negociaciones, pero después todos los involucrados compartirán las SA de IPSec negociada y las almacenarán en sus respectivas \gls{SAD}.
+
+En el modo rápido, ambas partes tienen que negociar una combinación de uno o más protocolos, que son enviados como propuestas (al igual que la Fase I), por cada SA de IPSec. Por ejemplo se pueden usar estas combinaciones:
+
+\begin{itemize}
+	\item ESP-3DES-MD5
+	\item ESP-3DES-SHA-PFS
+	\item AH-3DES-MD5-PFS
+	\item AH-3DES-SHA-PFS
+\end{itemize}
+
+Además, con cada propuesta se envía la siguiente información adicional:
+
+\begin{itemize}
+	\item Tiempo de vida de la SA de IPSec propuesta.
+	\item Grupo DH.
+	\item Indicador de modo transporte o túnel.
+	\item Información de claves.
+\end{itemize}
+
+De esta manera queda establecido el intercambio de claves una vez concluida la Fase II. Lo que sigue es la descripción de los protocolos de intercambio de claves.
+
+\subsection{Funcionamiento de IPSec}
+
+El procesamiento de paquetes entrantes y salientes en IPSec pueden variar poco y son casi simétricos. Por ejemplo, el procesamiento para un paquete IP saliente se describe de la siguiente manera:
+
+\begin{enumerate}
+	\item Para saber qué hacer con el paquete saliente, se comprueba su \gls{SPD} definida por el administrador del sistema.
+	\item IPSec agrega la regla establecida en el punto anterior (AH, ESP o IPCOMP\footnote{Estos protocolos se describen con más detalles en las siguientes secciones.}).
+	\item Ahora el módulo IPSec determina qué parámetros utilizar para proteger el paquete, definidos en las \gls{SA} que señala a una entrada concordante de la SPD.
+\end{enumerate}
+
+El procesamiento del tráfico de paquetes entrantes se realiza de la siguiente manera:
+
+\begin{enumerate}
+	\item Se determina la SA (asociación de seguridad) en la base de datos SA del host destino.
+	\item Se obtiene el \gls{SPI}, dirección IP del destino y protocolo de manipulación de datos IPSec (AH o ESP).
+	\item Se realiza la autenticación y descifrado correspondientes.
+	\item Luego se obtiene la SPD con la información necesaria para realizar la operación adecuada con el paquete.
+\end{enumerate}
+
+Una de las razones por las que no se obtiene primero la SPD es porque el paquete IP puede tener una cabecera cifrada, y que esta contenga información como número de puerto, el cual resulte necesario para pasar las reglas SPD.
+
+\section{Métodos de Autenticación}
+\label{sec:ipsec_metodos_de_autenticacion}
+
+Antes de iniciar una transferencia de datos entre dos hosts en una red, se requiere de un paso previo que se llama \emph{autenticación}. El host solicitado por un determinado servicio, pide al solicitante, que se identifique, que demuestre que está autorizado para establecer dicha transferencia.
+
+IPSec provee autenticación mutua, es decir, que no es solo el host solicitante el que se identifica, sino también el solicitado. Esto esto ayuda a incrementar el nivel de seguridad de nuestras VPNs.
+
+El proceso de identificación es lo que se denomina \emph{autenticación}, y existen diferentes métodos para hacerlo. En esta sección se explicará en que consisten algunos de ellos, y se analizarán las ventajas y desventajas de los mismos.
+
+\subsection{Pre-Shared Key (PSK)}
+\label{subsec:ipsec_psk}
+
+El método de autenticación mediante \texttt{pre-shared key} (clave compartida previamente, en castellano), es el más simple de todos. Consiste en una clave (o llave) secreta conocida únicamente por los hosts que desean establecer la conexión VPN. La clave consta de una consecución de caracteres, como por ejemplo ``estaeslaclavesecreta''.
+
+Cuando dos hosts concuerdan autenticar utilizando este método, transmiten al otro la clave para comprobar que sea la misma en ambos. Para hacer esto de forma segura, se utiliza \textendash en general\textendash el protocolo Diffie-Hellman \footnote{El protocolo Diffie-Hellman permite el intercambio secreto de claves entre dos partes que no han tenido contacto previo, utilizando un canal inseguro, y de manera anónima (no autenticada).} de \cite{dh-wiki}.
+
+La seguridad de la autenticación mediante PSK, radica en el compartimiento seguro de las claves. Por ejemplo, en la casa central de una empresa se instala un servidor VPN que utiliza IPSec y utiliza PSK como método de autenticación. El encargado de la instalación también tiene a cargo la configuración de los extremos opuestos del servidor, que se encuentran en las sucursales de dicha empresa. Al momento de configurar el ISAKMP (manejador de claves) de la casa central, ha realizado una PSK que tiene que llevar a las sucursales de manera segura; de modo tal que ningún intruso pueda obtenerlas, y establecer una VPN con la casa central.
+
+El modo más seguro para transportarlas, es que este empleado se traslade físicamente hasta las sucursales y las configure él mismo. Cuando las distancias son muy grandes, esto se hace imposible, por lo que hay que volver a confiar en la tecnología. Utilizar una conexión segura (encriptada) puede ser una opción; por ejemplo puede configurar las sucursales a través de una sesión \gls{SSH}, enviarlas al administrador remoto vía ftps, https, entre otros protocolos seguros.
+
+De esta manera surge una desventaja, que es si alguien llegara a conocer la PSK, los datos \textendash e incluso la integridad de la empresa \textendash corre peligro; por lo que es conveniente que no se la confíe a cualquier persona, ni que la contraseña sea de fácil deducción.
+
+\subsection{Certificados Digitales X.509}
+\label{subsec:ipsec_certificados_x509}
+
+Con el objeto de comprender los certificados \texttt{X.509}, previamente se verán algunos conceptos necesarios para incrementar la seguridad de la VPN.
+
+\subsubsection{Certificados Digitales}
+
+Un \emph{Certificado Digital} es un documento digital mediante el cual un tercero confiable (una autoridad de certificación) garantiza la vinculación entre la identidad de un sujeto o entidad y su clave pública.
+
+Existen varios formatos para certificados digitales, pero los más comúnmente empleados se rigen por el estándar UIT-T X.509. El certificado contiene usualmente el nombre de la entidad certificada, número de serie, fecha de expiración, una copia de la clave pública del titular del certificado (utilizada para la verificación de su firma digital) y la firma digital de la autoridad emisora del certificado de forma que el receptor pueda verificar que esta última ha establecido realmente la asociación.
+
+Cualquier persona o institución puede generar un certificado digital, pero si éste no es reconocido por quienes interactúen con el propietario del certificado, el valor del mismo es prácticamente nulo. Para que los certificados emitidos por una entidad sean fiables los emisores deben acreditarse. Ver más en \cite{cert-wiki}.
+
+\subsubsection{Autoridad de Certificación}
+
+Una Autoridad de certificación o certificadora (de \cite{ca-wiki}) es una entidad de confianza, responsable de emitir y revocar los certificados digitales, para lo cual se emplea la criptografía de clave pública.
+
+Para este caso no se requiere de los servicios de una CA externa, se puede firmar por uno mismo los certificados, ya que no se necesita reconocimiento público para este trabajo; e incluso a la hora de implementar una VPN en una empresa, se puede tener su propia autoridad de certificación.
+
+\subsubsection{El estándar X.509}
+
+X.509 \textendash en su versión 3 \textendash es un formato estándar, internacionalmente aceptado, para certificados digitales. Dichos certificados pueden contener información específica de la organización a la cual pertenece, que puede ser utilizada para una mejor identificación de la organización en las operaciones.
+
+La estructura general interna de un certificado X.509 puede verse en la configuración \ref{config:estandar_x509}.
+
+\begin{configuracion_small}
+\begin{listing}[style=configuracion_small]
+    * Certificado
+          o Versión
+          o Número de serie
+          o ID del algoritmo
+          o Emisor
+          o Validez
+                + No antes de (fecha)
+                + No después de (fecha)
+          o Sujeto
+          o Información de clave pública del sujeto
+                + Algoritmo de clave pública
+                + Clave pública del sujeto
+          o Identificador único de emisor (opcional)
+          o Identificador único de sujeto (opcional)
+          o Extensiones (optional)
+                + ... 
+    * Algoritmo usado para firmar el certificado
+    * Firma digital del certificado
+\end{listing}
+\caption{Estructura de un certificado X.509}
+\label{config:estandar_x509}
+\end{configuracion_small}
+
+El primer campo \textendash luego de la validez \textendash es el \emph{subject} (sujeto), que contiene los datos que identifican al sujeto titular. Estos datos están expresados en notación DN (Distinguished Name), donde un DN se compone a su vez de diversos campos, siendo los más frecuentes los siguientes; CN (Common Name), OU (Organizational Unit), O (Organization) y C (Country). Un ejemplo para identificar un usuario mediante el DN, es el siguiente:
+
+\begin{itemize}
+	\item CN=nicolasformoso.com.ar
+	\item O=Proyecto Final
+	\item OU=VPN
+	\item C=AR
+\end{itemize}
+
+Además del nombre del sujeto titular (subject), el certificado también contiene datos asociados al propio certificado digital, como la versión del certificado, su identificador (serialNumber), la CA firmante (issuer), el tiempo de validez (validity), etc.
+
+La versión X.509.v3 también permite utilizar campos opcionales (nombres alternativos, usos permitidos para la clave, ubicación de la CRL y de la CA, etc.).
+
+Luego el certificado contiene la clave pública, que consta de dos campos, el que muestra el algoritmo utilizado para crear la clave (ej. RSA), y la propia clave pública.
+
+Por último, la CA ha añadido la secuencia de campos que identifican la firma de los campos previos. Esta secuencia contiene tres atributos, el algoritmo de firma utilizado, el hash de la firma, y la propia firma digital como se puede ver en \cite{x509-wiki}.
+
+\section{Descripción General de la VPN}
+\label{sec:ipsec_implementacion}
+
+Nuevamente, como en \emph{VPN usando PPP sobre SSH} (Capítulo \ref{chap:vpn_pppsobressh}), la topología seleccionada para la VPN que implementaremos es \emph{Red a Red}.
+
+La diferencia fundamental con la implementación anterior, es que aquí, el Servidor VPN comparte el mismo hardware que el Firewall, es decir, se encuentran en el mismo equipo; esto refleja una ventaja, dado que pueden crearse reglas para el tráfico VPN con las mismas herramientas que para el resto del tráfico de la red; aunque también se tienen algunas desventajas desventajas (Sección \ref{sec:interaccion_con_el_firewall}).
+
+La topología red a red, permite que las redes involucradas en la conexión, tengan la impresión de que se encuentran unidas solamente por un router; pero en realidad pueden estar separadas por grandes distancias. Las dos redes conectadas a través de Internet y la conexión virtual privada establecida entre ellas, se pueden ver en la Figura \ref{fig:vpn_en_fw}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{imagenes/ipsec/vpn_en_fw}
+\caption{El servidor VPN en el mismo equipo que el Firewall}
+\label{fig:vpn_en_fw}
+\end{figure}
+
+El Servidor VPN se ha implementado en el Firewall. Dicho equipo funciona también como \emph{default gateway} (en castellano, puerta de enlace predeterminada), que es la única puerta de entrada/salida de datos a Internet. Esto ayuda a que la auditoría de seguridad sea sencilla, ya que la misma se reduce a un solo punto de conexión.
+
+El sistema operativo de dicho servidor es OpenBSD, que tiene la cualidad de ser sumamente estable y optimizado en cuestiones de seguridad. Véase la Sección \ref{sec:realizacion_entornos} para más detalles de los sistemas utilizados.
+
+Finalmente, el protocolo que utilizará el Servidor VPN es IPSec, ya descrito anteriormente en este mismo capítulo. El intercambio de claves será automático, por lo que se requerirá para el mismo, el protocolo IKE, que utiliza ISAKMP/Oakley.
+
+\section{Configuración de los nodos}
+\label{sec:ipsec_configuracion}
+
+Gracias a la transparencia de este tipo de VPN, los únicos nodos que necesitan ser configurados son los que establecen la conexión. El resto de los nodos \textendash en ambas redes \textendash solo deben tener configurado como puerta de enlace predeterminada al Servidor VPN; esto es así, ya que dicho servidor se implementa en el mismo \emph{Default Gateway}.
+
+Como los nodos que establecen la VPN tienen el mismo Sistema Operativo \textendash OpenBSD\textendash y los mismos demonios, las configuraciones son similares. Por lo tanto, todo lo que se encuentra explicado en el resto de esta sección, es válido para ambos nodos, caso contrario se harán notar las diferencias.
+
+\subsection{Configuración del kernel}
+
+A diferencia de GNU/Linux, OpenBSD maneja los módulos del kernel a través de un comando llamado \emph{sysctl}, que permite agregar, modificar y eliminar ciertos parámetros del kernel. En una consola, y con privilegios de superusuario se deben escribir los siguientes comandos para habilitar las opciones de IPSec:
+
+\begin{listing}[style=consola, numbers=none]
+$ sudo sysctl net.inet.ip.forwarding=1
+$ sudo sysctl net.inet.esp.enable=1
+$ sudo sysctl net.inet.ah.enable=1
+$ sudo sysctl net.inet.ipcomp.enable=1
+\end{listing}
+
+Con las líneas anteriores el kernel habilita los parámetros especificados, pero si el servidor se apagara por alguna razón, habría que escribirlas de nuevo. Para evitar esta incomodidad, se las deben especificar en un archivo que las cargará automáticamente durante el arranque. Este es \texttt{/etc/sysctl.conf}, que debe contener las líneas que aparecen en la Configuración \ref{config:ipsec_sysctl.conf}.
+
+\begin{configuracion}
+\begin{listing}[style=configuracion]
+net.inet.ip.forwarding=1
+net.inet.esp.enable=1
+net.inet.ah.enable=1
+net.inet.ipcomp.enable=1
+\end{listing}
+\caption{Líneas necesarias para habilitar el soporte a IPSec.}
+\label{config:ipsec_sysctl.conf}
+\end{configuracion}
+
+En general, \texttt{/etc/sysctl.conf} ya posee las líneas 1, 2, 3 y 4 de \ref{config:ipsec_sysctl.conf} (y otras más) pero se encuentran comentadas, por lo que habrá que quitar el caracter numeral (\#). El siguiente listado detalla cada línea del archivo en cuestión:
+
+\begin{enumerate}
+	\item \emph{net.inet.ip.forwarding=1}: Como se esta trabajando en una puerta de enlace, esta línea esta habilitada. La misma permite que los hosts internos de la red puedan acceder a Internet.
+	\item \emph{net.inet.esp.enable=1}: Habilita en el kernel el protocolo ESP de IPSec.
+	\item \emph{net.inet.ah.enable=1}: Habilita en el kernel el protocolo AH de IPSec.
+	\item \emph{net.inet.ipcomp.enable=1}: Habilita en el kernel el protocolo de compresión IPComp, de IPSec.
+\end{enumerate}
+
+\subsection{La interface \texttt{enc0}}
+
+Para poder inspeccionar el tráfico VPN que pasa por nuestro Servidor, se requiere levantar una interfaz llamada \texttt{enc}X, donde X se reemplaza por un número entero. Para levantar la interfaz se ejecuta \emph{ifconfig enc0 up}; pero para que se levante cada vez que se encienda el equipo, se edita y guarda el archivo \texttt{/etc/hostname.enc0}, conteniendo en su interior únicamente el comando \emph{up}.
+
+La funcionalidad de esta interfaz, viene dada por el hecho de que permite leer los datos antes de ser encriptados, de los paquetes IPSec que se envían; así como permite leer los datos de los paquetes IPSec que llegan, luego de ser desencriptados.
+
+\subsection{Directivas de Firewall}
+\label{sec:isakmpd_fw}
+
+Cada una de las redes está protegida por el firewall propio de OpenBSD. Por lo tanto, es necesario habilitar los puertos y permitir el tráfico de los protocolos utilizados por IPSec, de lo contrario el \emph{Packet Filter} no lo dejará salir, y descartará los paquetes. Para comprender mejor el funcionamiento véase la Sección \ref{sec:ReglasFiltradoOpenBSD}.
+
+Luego se crea un \emph{anchor}, que será el que contenga todas las reglas necesarias para establecer VPN. La ventaja de los anchors es que se pueden recargar las reglas contenidas en ellos, sin tener que recargar las reglas principales de PF, ni la de los otros \emph{anchors}.
+
+Para crear un anchor llamado \texttt{vpn\_isakmpd}, simplemente se agrega al archivo \texttt{/etc/pf.conf}, la línea:
+
+\begin{verbatim}
+anchor vpn_isakmpd
+\end{verbatim}
+
+Luego se deben recargar las reglas del PF con el comando \texttt{pfctl -f /etc/pf.conf}. Luego, para ver si el anchor se ha creado satisfactoriamente, se ejecuta \texttt{pfctl -s rules}; esto devuelve todas las reglas cargadas en el firewall, y los anchors si es que los hay.
+
+La siguiente salida en pantalla es un ejemplo del uso de este comando:
+
+\begin{listing}[style=consola, numbers=none]
+# pfctl -s rules
+scrub in all fragment reassemble
+block return all
+pass quick on xl0 all flags S/SA keep state
+pass quick on lo0 all flags S/SA keep state
+pass quick on ppp0 all flags S/SA keep state
+anchor "vpn_isakmpd" all
+pass in on tun0 inet proto tcp from any to (tun0) port = ssh flags S/SA keep state
+pass in on tun0 inet proto tcp from any to (tun0) port = www flags S/SA keep state
+pass in on tun0 inet proto tcp from any to (tun0) port = auth flags S/SA keep state
+pass in on xl0 inet from 192.168.1.0/24 to any flags S/SA keep state
+pass out on xl0 inet from any to 192.168.1.0/24 flags S/SA keep state
+pass out on tun0 proto tcp all flags S/SA modulate state
+pass out on tun0 proto udp all keep state
+pass out on tun0 proto icmp all keep state
+#
+\end{listing}
+
+Dicho sea de paso, esta es la salida original del comando, de uno de los servidores durante las pruebas. La regla necesaria es \texttt{anchor ``vpn\_isakmpd all''}; esto quiere decir, que el firewall también leerá todas las reglas que se encuentren es el \emph{anchor}.
+
+Naturalmente, en el \emph{anchor} recién creado, no hay reglas definidas. Por esto se crea un archivo nuevo que contiene las reglas necesarias para cargar en el \emph{anchor}; el archivo es: \texttt{/etc/pf.conf.isakmpd}, cuyo contenido se puede ver en la Configuración \ref{config:pfconf_isakmpd}, que esta ubicado en una de las puertas de enlace (más específicamente, en \texttt{nicolasformoso.com.ar}).
+
+\begin{configuracion}
+\begin{listing}[style=configuracion]
+# Interfaces
+ext_if="tun0"
+
+# Variables
+GUS_DN = "gustavocortez.com.ar"
+LOCAL_DN = "nicolasformoso.com.ar"
+GUS_NET = "192.168.0.0/24"
+LOCAL_NET = "192.168.1.0/24"
+
+## Permitiendo la entrada/salida del tráfico encriptado,
+# solo de la dirección que deseamos
+pass in proto esp from $GUS_DN to $LOCAL_DN
+pass out proto esp from $LOCAL_DN to $GUS_DN
+pass in proto ah from $GUS_DN to $LOCAL_DN
+pass out proto ah from $LOCAL_DN to $GUS_DN
+
+# Necesitamos permitir el tráfico "ipencap" en la interfaz enc0
+pass in on enc0 proto ipencap from $GUS_DN to $LOCAL_DN
+
+## Permitimos el tráfico de paquetes entre las subredes locales,
+# por la interfaz "enc0"
+pass in on enc0 from $GUS_NET to $LOCAL_NET
+pass out on enc0 from $LOCAL_NET to $GUS_NET
+
+## Permitimos el tráfico por el puerto 500 (isakmpd), pero solo
+# con un destino especificado ($GUS_DN).
+pass in on $ext_if proto udp from $GUS_DN port = 500 to $LOCAL_DN port = 500
+pass out on $ext_if proto udp from $LOCAL_DN port = 500 to $GUS_DN port = 500
+#$
+\end{listing}
+\caption{Archivo /etc/pf.conf.isakmpd}
+\label{config:pfconf_isakmpd}
+\end{configuracion}
+
+Básicamente lo que se hace, con estas reglas de firewall, es permitir el flujo de paquetes entre las puertas de enlace de las respectivas redes. Al momento de cargarse estas líneas en el firewall, se resuelven los nombres de dominios y se los reemplaza por la dirección IP correspondiente; por lo que si en algún momento el ISP cambia la IP asignada anteriormente, es necesario volver a recargar las reglas. Por el contrario, en una empresa que posee direcciones IP públicas estáticas (o fijas), no tienen el mismo problema.
+
+Se utiliza la interfaz \texttt{enc0} para transmitir el tráfico encapsulado, por lo que se permite el tráfico a través de ella, desde y hacia el par remoto. También se da paso al flujo de paquetes encriptados con IPSec, con ESP y/o AH.
+
+En la siguiente salida en pantalla de la consola se puede observar la ejecución de los comandos para cargar las reglas de \emph{anchor} y para visualizarlas:
+
+\begin{listing}[style=consola, numbers=none]
+$ sudo pfctl -a vpn_isakmpd -f /etc/pf.conf.isakmpd
+$ sudo pfctl -a vpn_isakmpd -s rules
+pass in inet proto esp from 190.137.64.31 to 190.137.67.68 keep state
+pass in inet proto ah from 190.137.64.31 to 190.137.67.68 keep state
+pass in on enc0 inet proto ipencap from 190.137.64.31 to 190.137.67.68 keep state
+pass in on tun0 inet proto udp from 190.137.64.31 port = isakmp to 190.137.67.68 port = isakmp keep state
+pass in on enc0 inet from 192.168.0.0/24 to 192.168.1.0/24 flags S/SA keep state
+pass out inet proto esp from 190.137.67.68 to 190.137.64.31 keep state
+pass out inet proto ah from 190.137.67.68 to 190.137.64.31 keep state
+pass out on tun0 inet proto udp from 190.137.67.68 port = isakmp to 190.137.64.31 port = isakmp keep state
+pass out on enc0 inet from 192.168.1.0/24 to 192.168.0.0/24 flags S/SA keep state
+$
+$
+\end{listing}
+
+\subsection{Configuración de \texttt{isakmpd}}
+
+El intercambio de claves y la negociación de otros parámetros necesarios para la VPN, se hace en el establecimiento de la misma. Estas gestiones pueden realizarse de forma manual, o automática. En este caso se ha optado por el modo automático, debido a que, la configuración es más sencilla y resuelve problemas del intercambio manual de claves, como los ``ataques por repetición de paquetes''.
+
+Toda la configuración de este demonio se guarda por defecto en un archivo llamado \texttt{isakmpd.conf}, en el directorio \texttt{/etc/isakmpd}. Además de dicha configuración, existen otros archivos que también se tienen que analizar y modificar.
+
+\subsubsection{Análisis de \texttt{isakmpd.conf}}
+
+En el archivo de Configuración \ref{config:isakmpd.conf.psk} se puede ver un ejemplo del contenido del archivo.
+
+Este archivo se divide en secciones, cuyos nombres se encuentran encerrados entre corchetes. Por ejemplo, [General] es la primera sección; en ella se definen parámetros globales para todas las conexiones que se puedan definir a continuación. La opción \emph{Listen-on=}, permite especificar una lista separadas por comas de las direcciones IP locales y/o interfaces de red, a través de las cuales se establecerán las VPN.
+
+\begin{configuracion_small}
+\begin{listing}[style=configuracion_small]
+[General]
+Listen-On=              tun0
+
+[Phase 1]
+190.225.230.254=        peer-gustavo
+
+[Phase 2]
+Connections=            VPN-GUSTAVO
+
+[peer-gustavo]		# <ISAKMP-Peer>
+Phase=                  1
+Address=    	        190.225.230.254
+Configuration=          Default-main-mode
+Authentication=         clavesupersecreta
+
+[VPN-GUSTAVO]		# <IPSec-Connection> 
+Phase=                  2
+ISAKMP-peer=            peer-gustavo
+Configuration=          Default-quick-mode
+Local-ID=               nicolas-internal-network
+Remote-ID=              gustavo-internal-network
+
+[gustavo-internal-network]	# <IPSec-ID>
+ID-type=                IPV4_ADDR_SUBNET
+Network=		192.168.0.0                
+Netmask=                255.255.255.0
+
+[nicolas-internal-network] 	# <IPSec-ID>
+ID-type=                IPV4_ADDR_SUBNET
+Network=		192.168.1.0                
+Netmask=                255.255.255.0
+
+[Default-main-mode]
+EXCHANGE_TYPE=          ID_PROT
+Transforms=             3DES-SHA,BLF-SHA
+
+[Default-quick-mode]
+EXCHANGE_TYPE=          QUICK_MODE
+Suites=                 QM-ESP-3DES-SHA-SUITE
+\end{listing}
+\caption{Archivo \texttt{isakmpd.conf} (con autenticación mediante PSK)}
+\label{config:isakmpd.conf.psk}
+\end{configuracion_small}
+
+Las secciones \emph{[Phase 1]} y \emph{[Phase 2]} se utilizan durante el establecimiento de la conexión en las respectivas fases. En la primera se define el parámetro \texttt{190.225.230.254=}, que es una dirección IP pública con la cual se va a conectar; a la derecha del símbolo igual, se define el nombre de la sección que tiene los parámetros para lograr establecer la conexión con el equipo remoto. En la segunda sección, el parámetro \texttt{Connections=}, es el que define una lista de posibles secciones a utilizar para establecer las SA de IPSec.
+
+La sección \emph{[peer-gustavo]} \textendash relacionada en [Phase 1] con una dirección IP \textendash, define los parámetros que se utilizarán para la fase 1 para establecer la conexión con dicho host. Lo parámetros que merecen ser destacados son \texttt{Configuration=} que contiene el nombre de la sección donde se definen el modo, que puede ser Principal (ID\_PROT) o agresivo (AGRESSIVE), y los algoritmos de encriptación y Hash que se utilizarán (en este caso, 3DES y SHA respectivamente). El nombre de esta sección es \emph{Default-main-mode}.
+
+El siguiente parámetro a ser destacado es \texttt{Authentication=}; este se utiliza solo cuando el método de autenticación es mediante clave \gls{PSK}, y lo que se especifica al lado es dicha clave. Este parámetro debe ser el mismo en los dos nodos que desean establecer la conexión.
+
+La sección \emph{[VPN-GUSTAVO]} \textendash especificada en [Phase 2] \textendash, contiene los parámetros para la creación de las SA; en el que se tiene \texttt{ISAKMP-peer=}, donde se especifica la sección que contiene los parámetros para la fase 1 de la conexión, luego \texttt{Configuration=}, que contiene la sección donde encuentran los parámetros para establecer la fase 2, en el modo (QUICK\_MODE), y por último las \texttt{Suites=}, que son una lista de conjuntos de protocolos utilizados para la protección del tráfico IP (en este caso, se utilizan \texttt{ESP+3DES+SHA}).
+
+En las secciones \texttt{Local-ID=} y \texttt{Remote-ID=} se definen los nombres de las secciones que contienen las definiciones de las redes local y remota respectivamente.
+
+\subsubsection{Configuración de Certificados Digitales X.509}
+
+En el ejemplo del archivo \texttt{/etc/isakmpd/isakmpd.conf} dado anteriormente, el modo de autenticación utilizado es \gls{PSK}.
+
+Ahora se va a configurar un certificado digital X.509 para la autenticación, a fin de tener mayor control de quienes se conectan a la VPN.
+
+Los certificados digitales, para que funcionen, deben ser firmados por una entidad llamada \emph{Autoridad de Certificación}, que es un tercero que da garantía de que el certificado es de la persona que lo posee, y es válido. Para evitar la incomodidad y la demora de estas terceras partes, se creará una autoridad de certificación propia, que consiste únicamente en crear una clave privada con la cual se firmarán los certificados que necesarios \footnote{La CA, no necesariamente debe ser uno de los equipos involucrados en la conexión, sino que puede ser cualquier otro con las herramientas para hacerlo.}.
+
+En la siguiente salida por pantalla de la terminal, se puede ver la línea necesaria para hacer este trabajo:
+
+\begin{listing}[style=consola, numbers=none]
+HOST_CA# openssl req -x509 -days 365 -newkey rsa:1024 -keyout /etc/ssl/private/ca.key \
+> -out /etc/ssl/ca.crt
+Generating a 1024 bit RSA private key
+........................................++++++
+......++++++
+writing new private key to '/etc/ssl/private/ca.key'
+Enter PEM pass phrase: <passphrase>
+Verifying - Enter PEM pass phrase: <passphrase>
+-----
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) []: AR
+State or Province Name (full name) []: TUC
+Locality Name (eg, city) []: SMT
+Organization Name (eg, company) []: Proyecto Final
+Organizational Unit Name (eg, section) []: CA_TEST
+Common Name (eg, fully qualified host name) []: nicolasformoso.com.ar
+Email Address []: ca@nicolasformoso.com.ar
+HOST_CA#
+\end{listing}
+
+El siguiente paso, es la creación de las solicitudes de firma de certificados (los CSR, \emph{Certificate Signing Request}):
+
+\begin{listing}[style=consola, numbers=none]
+HOST_VPN1# openssl req -new -key /etc/isakmpd/private/local.key \
+>  -out /etc/isakmpd/private/gustavocortez.com.ar.csr
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) []: AR
+State or Province Name (full name) []: TUC
+Locality Name (eg, city) []: SMT
+Organization Name (eg, company) []: Proyecto Final
+Organizational Unit Name (eg, section) []: VPN_IPSec
+Common Name (eg, fully qualified host name) []: gustavocortez.com.ar
+Email Address []: vpn@gustavocortez.com.ar
+
+Please enter the following 'extra' attributes
+to be sent with your certificate request
+A challenge password []: <enter>
+An optional company name []: <enter>
+HOST_VPN1#
+\end{listing}
+
+El paso anterior debe realizarse en los dos hosts que pretendan conectarse en la VPN. Este devuelve el CSR para el respectivo host en el archivo \texttt{private/gustavocortez.com.ar.csr}. Luego, las CSR deben ser enviadas a la CA, para ser firmadas por la misma.
+
+La autoridad de certificación, firmará los certificados X.509 de la siguiente forma:
+
+\begin{listing}[style=consola, numbers=none]
+HOST_CA# env CERTFQDN=gustavocortez.com.ar openssl x509 -req -days 365 -in gustavocortez.com.ar.csr -out \
+>  gustavocortez.com.ar.crt -CA /etc/ssl/ca.crt -CAkey /etc/ssl/private/ca.key \
+>  -CAcreateserial -extfile /etc/ssl/x509v3.cnf -extensions x509v3_FQDN
+Signature ok
+subject=/C=AR/ST=TUC/L=SMT/O=Proyecto Final/OU=VPN_IPSec/CN=gustavocortez.com.ar/emailAddress=vpn@gustavocortez.com.ar
+Getting CA Private Key
+Enter pass phrase for /etc/ssl/private/ca.key: <passphrase>
+HOST_CA#
+\end{listing}
+
+Esto generará el certificado X.509 firmado, a partir de la solicitud CSR. Dichos certificados deben ser llevados hacia el respectivo host, y deben ser ubicados en el directorio \texttt{/etc/isakmpd/cert}; la ruta al certificado sería: \texttt{/etc/isakmpd/cert/gustavocortez.com.ar}. También es necesario que la CA otorgue a los hosts el archivo donde se encuentra la firma, es decir, \texttt{/etc/ssl/ca.crt}, que en los hosts debe guardarse en \texttt{/etc/isakmpd/ca}.
+
+Ya están dispuestos los certificados en cada host, ahora se debe modificar el archivo \texttt{isakmpd.conf}, para que funcionen. En la Configuración \ref{config:isakmpd.conf.x509} se muestra un ejemplo de dicho archivo para que funcione con certificados X.509.
+
+Se muestran únicamente las secciones que requieren modificación o se agregan, todas las demás quedan como estaban en el caso anterior.
+
+\begin{configuracion_small}
+\begin{listing}[style=configuracion_small]
+[peer-gustavo]		# <ISAKMP-Peer>
+Phase=                  1
+Address=    	        190.137.64.31
+Configuration=          Default-main-mode
+ID=			nicolas-phase1-id
+
+[nicolas-phase1-id]	# <phase1-ID>
+ID-type=	FQDN
+Name= 		nicolasformoso.com.ar
+
+[Default-main-mode]
+EXCHANGE_TYPE=          ID_PROT
+Transforms=             3DES-SHA-RSA_SIG,BLF-SHA
+
+[Default-quick-mode]
+EXCHANGE_TYPE=          QUICK_MODE
+Suites=                 QM-ESP-DES-MD5-AH-MD5-SUITE
+
+[QM-ESP-DES-MD5-AH-MD5-SUITE]
+Protocols=              QM-ESP-DES-MD5,QM-AH-MD5
+
+[X509-certificates]
+CA-directory=           /etc/isakmpd/ca/
+Cert-directory=         /etc/isakmpd/certs/
+Private-key=            /etc/isakmpd/private/local.key
+\end{listing}
+\caption{Secciones del archivo /etc/isakmpd/isakmpd.conf (para autenticación con X.509)}
+\label{config:isakmpd.conf.x509}
+\end{configuracion_small}
+
+Las únicas modificaciones necesarias para que funcionen estos certificados, son las que se ven en las secciones \emph{[peer-gustavo]} y \emph{[Default-main-mode]}. En la primera se agrega el parámetro \texttt{ID=}, que define una sección de la que se obtiene el \emph{FQDN} local. Este sirve para encontrar el respectivo certificado; en la segunda se cambia 3DES-SHA por 3DES-SHA-RSA\_SIG, en el que el primero es para autenticación mediante PSK y el segundo especifica que se debe buscar un certificado (RSA Signature).
+
+La sección \emph{[X509-certificates]} define los directorios donde se ubicarán las claves y los certificados, si se utilizan los que se definen por defecto, no hace falta especificarla.
+
+Una diferencia entre los dos archivos \texttt{isakmpd.conf} \textendash que no tiene que ver con el modo de autenticación \textendash, es la que hay en la sección \emph{[Default-quick-mode]}, se cambió el modo de protección de tráfico IPSec de QM-ESP-3DES-SHA-SUITE a QM-ESP-DES-MD5-AH-MD5-SUITE. Con esta nueva suite de protocolos, no solo se agrega la protección que ofrece ESP, sino también la de AH.
+
+\subsubsection{El archivo \texttt{isakmpd.policy}}
+
+Este archivo es mucho más corto que el anterior, pero también es necesario, por que ayuda a definir la política para la autenticación, el método, y otras condiciones para agregar seguridad a la VPN con IPSec.
+
+\begin{configuracion_small}
+\begin{listing}[style=configuracion_small]
+Keynote-version: 2
+Authorizer: "POLICY"
+Licensees: "DN:/C=AR/ST=TUC/L=SMT/O=Proyecto Final/CN=nicolasformoso.com.ar"
+Conditions: app_domain == "IPsec policy" &&
+            esp_present == "yes" &&
+            esp_enc_alg != "null" -> "true";
+\end{listing}
+\caption{Archivo \texttt{isakmpd.policy} (para autenticación con X.509)}
+\label{config:isakmpd.policy.x509}
+\end{configuracion_small}
+
+Un ejemplo de este archivo sería como en la Configuración \ref{config:isakmpd.policy.x509}. A continuación se detallan los parámetros:
+
+\emph{Authorizer:}, siempre llevará el parámetro ``POLICY'', que indica que no hay delegación de autenticación.
+
+\emph{Conditions:} permite agregar condiciones tanto para los protocolos utilizados en la encriptación, hashing, como para las direcciones de los nodos remotos. En el manual se muestra una lista interminable de parámetros que se pueden especificar aquí.
+
+\emph{Lecensees:} es el que se usará para indicar cómo será la autenticación. Si esta ausente, esta se hará mediante PSK (especificada en el archivo \texttt{isakmpd.conf}); si está presente, se puede indicar una PSK, una CA para certificados X.509, o ambas cosas. Por ejemplo, para indicar una PSK, esta línea debería ser de la siguiente forma:
+
+\begin{verbatim}
+Licensees: "passphrase:clavesupersecreta"
+\end{verbatim}
+
+Pero si se quieren utilizar los certificados creados anteriormente, es necesario agregar la identificación de la CA, para admitir los certificados firmados por la misma. Esta identificación se obtiene de la siguiente forma:
+
+\begin{listing}[style=consola, numbers=none]
+$ cd /etc/isakmpd
+$ openssl x509 -in ca/ca.crt -noout -subject
+Subject: /C=ar/ST=tuc/L=smt/O=Proyecto Final/CN=nicolasformoso.com.ar
+\end{listing}
+
+Por lo que en el archivo \texttt{isakmpd.policy}, se debe agregar la línea:
+
+\begin{verbatim}
+Licensees: "DN:/C=AR/ST=TUC/L=SMT/O=Proyecto Final/CN=nicolasformoso.com.ar"
+\end{verbatim}
+
+Donde DN significa \emph{Distinguished Name}, y es sucedido por la identificación de la CA.
+
+\subsection{Iniciación de la conexión}
+
+Para activar las conexiones, lo único necesario es hacer correr el demonio; con permisos de superusuario se escribe en una consola simplemente el comando \texttt{isakmpd}. El demonio se ejecutará independiente de una terminal, si el otro extremo está activo, se establecerá automáticamente la conexión, sino se esperará a que se solicite el establecimiento de la misma.
+
+Para ver las rutas creadas por IPSec, en la consola se ejecuta el siguiente comando:
+
+\begin{listing}[style=consola, numbers=none]
+$ netstat -rn -f encap
+Routing tables
+
+Encap:
+Source             Port  Destination        Port  Proto SA(Address/Proto/Type/Direction)
+192.168.1/24       0     192.168.0/24       0     0     190.30.88.184/esp/use/in
+192.168.0/24       0     192.168.1/24       0     0     190.30.88.184/esp/require/out
+$
+\end{listing}
+
+La salida del comando \texttt{netstat} son las rutas creadas entre las redes que establecen la conexión, a través de la interfaz \texttt{enc0}. Para poder usarlas, hay que crear (en ambas redes) una ruta de la familia \emph{inet}; con esto se define la interfaz de entrada/salida de los paquetes encapsulados, que en este caso, será la interfaz de red local. La Figura \ref{fig:ruteo_isakmpd} refleja esta situación.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{imagenes/ipsec/ruteo.jpg}
+\caption{Configuración de ruteo en nodo isakmpd}
+\label{fig:ruteo_isakmpd}
+\end{figure}
+
+Cuando se establece la conexión con IPSec se crean asociaciones de seguridad (SA) y políticas de seguridad. Para ver las bases de datos correspondientes (SAD y SPD) se utiliza el comando \texttt{ipsecctl}, que también se utiliza cuando las SA son creadas manualmente.
+
+El comando siguiente devuelve el contenido de la SAD y de la SPD (llamada aquí FLOWS):
+
+\begin{listing}[style=consola, numbers=none]
+$ sudo ipsecctl -s all
+FLOWS:
+flow esp in from 192.168.1.0/24 to 192.168.0.0/24 peer 190.30.88.184 srcid 190.30.82.251/32 dstid 190.30.88.184/32 type use
+flow esp out from 192.168.0.0/24 to 192.168.1.0/24 peer 190.30.88.184 srcid 190.30.82.251/32 dstid 190.30.88.184/32 type require
+
+SAD:
+esp tunnel from 190.30.82.251 to 190.30.88.184 spi 0xa2aa4aaa auth hmac-sha1 enc 3des-cbc
+esp tunnel from 190.30.88.184 to 190.30.82.251 spi 0xfcd76754 auth hmac-sha1 enc 3des-cbc
+$
+\end{listing}
+
+
+\subsubsection{Verificación de la conexión}
+
+Por último, para ver si hay contacto entre los hosts internos de las redes, se pueden realizar unas simples pruebas. En el host \texttt{192.168.1.2} se escribe:
+
+\begin{listing}[style=consola, numbers=none]
+# ping -c 2 192.168.0.32
+PING 192.168.0.32 (192.168.0.32): 56 data bytes
+64 bytes from 192.168.0.32: icmp_seq=0 ttl=127 time=37.797 ms
+64 bytes from 192.168.0.32: icmp_seq=1 ttl=127 time=33.252 ms
+--- 192.168.0.32 ping statistics ---
+2 packets transmitted, 2 packets received, 0.0% packet loss
+round-trip min/avg/max/std-dev = 33.252/35.524/37.797/2.280 ms
+# ssh 192.168.0.32
+ssh: connect to host 192.168.0.32 port 22: Connection refused
+#
+\end{listing}
+
+Con el comando \texttt{ping} se comprueba si hay respuesta desde la dirección \texttt{192.168.0.32}; por lo que se puede ver en la salida anterior, es que sí hay respuesta. Seguidamente se puede intentar establecer una conexión SSH con dicho host (cuyo puerto 22 está cerrado a propósito).
+
+Al mismo tiempo de realizadas estas pruebas, en el servidor VPN del lado del host testeado, se estaba ejecutando un sniffer de paquetes (tcpdump) sobre la interfaz \texttt{enc0}; la salida que se obtuvo es la siguiente:
+
+\begin{listing}[style=consola, numbers=none]
+$ sudo tcpdump -i enc0
+tcpdump: listening on enc0, link-type ENC
+11:39:18.882757 (authentic,confidential): SPI 0xcfc4ee73: 192.168.1.2 > 192.168.0.32: icmp: echo request (encap)
+11:39:18.883959 (authentic,confidential): SPI 0xb11a0f91: 192.168.0.32 > 192.168.1.2: icmp: echo reply (encap)
+11:39:19.885315 (authentic,confidential): SPI 0xcfc4ee73: 192.168.1.2 > 192.168.0.32: icmp: echo request (encap)
+11:39:19.886169 (authentic,confidential): SPI 0xb11a0f91: 192.168.0.32 > 192.168.1.2: icmp: echo reply (encap)
+11:39:38.183945 (authentic,confidential): SPI 0xcfc4ee73: 192.168.1.2.33209 > 192.168.0.32.ssh: S 3134895536:3134895536(0) win 16384 <mss 1460,nop,nop,sackOK,nop,wscale 0,nop,nop,timestamp 3588245553 0> (DF) (encap)
+11:39:38.185066 (authentic,confidential): SPI 0xb11a0f91: 192.168.0.32.ssh > 192.168.1.2.33209: R 0:0(0) ack 3134895537 win 0 (encap)
+^C
+6 packets received by filter
+0 packets dropped by kernel
+$
+\end{listing}
+
+Se pueden observar los paquetes ICMP hacia y desde la dirección \texttt{192.168.0.32}. Luego se ve el intento de conexión SSH. Más pruebas se pueden ver en la Sección \ref{sec:ipsec_pruebas_mediciones}.
+
+Al final de cada línea en la salida del sniffer (que detalla un paquete) dice \emph{(encap)}, lo que sifnifica que el tráfico está encapsulado con IPSec.
+
+\section{Pruebas y mediciones}
+\label{sec:ipsec_pruebas_mediciones}
+
+En esta sección se van a detallar las aplicaciones utilizadas para comprobar que la comunicación se ha establecido correctamente y que la información llega a todos los puntos de la red interna. También se va mostrar el flujo de información que atraviesa la VPN de un extremo a otro.
+
+Por último se realizan mediciones en la velocidad de transferencia de archivos y en en las conexión a escritorios remoto. Además se van a realizar comprobaciones de la vulnerabilidad del sistema con un software especializado.
+
+\subsection{Revisión del tráfico}
+
+Una manera de ver si llegan los paquetes a destino o simplemente si atraviesan el firewall, es utilizar un filtro de paquetes. En OpenBSD se tiene \gls{tcpdump} en modo texto y en Windows (o cualquier otro sistema operativo) se puede utilizar el software libre \gls{Wireshark} en modo gráfico.
+
+La siguiente salida por pantalla muestra el tráfico de paquetes que llegan de un host remoto, que han pasando por el proceso de encapsulado, autenticación y cifrado de IPSec:
+
+\begin{listing}[style=consola, numbers=none]
+$ sudo tcpdump -i enc0
+tcpdump: listening on enc0, link-type ENC
+11:39:18.882757 (authentic,confidential): SPI 0xcfc4ee73: 192.168.1.2 > 192.168.0.32: icmp: echo request (encap)
+11:39:18.883959 (authentic,confidential): SPI 0xb11a0f91: 192.168.0.32 > 192.168.1.2: icmp: echo reply (encap)
+11:39:19.885315 (authentic,confidential): SPI 0xcfc4ee73: 192.168.1.2 > 192.168.0.32: icmp: echo request (encap)
+11:39:19.886169 (authentic,confidential): SPI 0xb11a0f91: 192.168.0.32 > 192.168.1.2: icmp: echo reply (encap)
+11:39:38.183945 (authentic,confidential): SPI 0xcfc4ee73: 192.168.1.2.33209 > 192.168.0.32.ssh: S 3134895536:3134895536(0) win 16384 <mss 1460,nop,nop,sackOK,nop,wscale 0,nop,nop,timestamp 3588245553 0> (DF) (encap)
+11:39:38.185066 (authentic,confidential): SPI 0xb11a0f91: 192.168.0.32.ssh > 192.168.1.2.33209: R 0:0(0) ack 3134895537 win 0 (encap)
+^C
+6 packets received by filter
+0 packets dropped by kernel
+$
+\end{listing}
+
+De esta manera se ha comprobado que por la interfaz \texttt{enc0} viajan los datos encapsulados desde una red a la otra.
+
+\subsection{Comprobación de la ruta de paquetes}
+
+Para comprobar el recorrido de los paquetes transmitidos por la red se ha utilizado \gls{traceroute} en los sistemas BSD y Linux, y \gls{tracert} en Windows. La siguiente salida en pantalla desde un equipo con Windows (cliente DHCP) que se le ha asignado la dirección IP 192.168.0.35, efectúa la traza hasta un equipo de otra red, a través de la VPN, cuya dirección de destino es 192.168.1.3.
+
+\begin{listing}[style=consola, numbers=none]
+C:\\Users\\Gustavo>tracert 192.168.1.3
+
+Traza a la dirección PONCHO [192.168.1.3]
+sobre un máximo de 30 saltos:
+
+  1    <1 ms    <1 ms    <1 ms  192.168.0.1
+  2    70 ms    42 ms    39 ms  192.168.1.2
+  3    38 ms    39 ms    39 ms  PONCHO [192.168.1.3]
+
+Traza completa.
+
+C:\\Users\\Gustavo>
+\end{listing}
+
+Se puede observar del listado anterior que el paquete primero llega a la puerta de enlace predeterminada del sistema local (es decir, 192.168.0.1), y luego el servidor que previamente ha establecido las rutas para interconectar las redes mediante la VPN, reenvía este paquete a la puerta de enlace remota (del otro extremo de la VPN) de dirección IP 192.168.1.2, que a su vez reenvía el paquete al equipo destino que pertenece a su red. En el siguiente listado se puede ver la operación invertida.
+
+\begin{listing}[style=consola, numbers=none]
+C:\\Documents and Settings\\Admin>tracert 192.168.0.32
+
+Traza a 192.168.0.32 sobre caminos de 30 saltos como máximo.
+
+  1    <1 ms    <1 ms    <1 ms  192.168.1.2
+  2    38 ms   150 ms    77 ms  192.168.0.1
+  3   352 ms   194 ms   361 ms  192.168.0.32
+
+Traza completa.
+
+C:\\Documents and Settings\\Admin>
+\end{listing}
+
+En esta situación, el equipo con dirección IP 192.168.1.3 realiza la traza de paquetes hacia un equipo de otra red, pasando por la VPN, y finalmente llegando a destino (de IP 192.168.0.32).
+
+\subsection{Transferencia de archivos}
+
+La transferencia de archivos se realiza a una velocidad aceptable, pero que depende de la capacidad de subida del enlace. El proveedor actual (ISP) permite una subida de 256 Kbps, por lo que se aproxima a casi 30 Kbytes por segundos teórico. En la Figura \ref{fig:ipsec_transferencia_archivo} se puede observar que la transferencia ronda los 24 Kbytes por segundo; esto resulta aceptable para las condiciones en que se realiza la transmisión, es decir, el retardo de las puertas de enlace, la franja horaria, distancia, entre otras condiciones.
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics{imagenes/ipsec/ipsec_transferencia_archivo}
+		\caption{Captura de pantalla de una transferencia de archivo mediante IPSec.}
+	\label{fig:ipsec_transferencia_archivo}
+\end{figure}
+
+Además se tiene en cuenta que la transferencia se realiza mediante el protocolo \gls{SMB} que utiliza Windows para la transferencia de archivo mediante el explorador de archivos, y que este no es el método más rápido para transferir archivos. Aún así, los resultados mediante \gls{FTP} fueron similares.
+
+\subsection{Escritorio remoto}
+
+También se ha evaluado el rendimiento mediante conexiones \gls{VNC} al escritorio remoto de un equipo de cada red, separada por la VPN. La Figura \ref{fig:ipsec_vnc} muestra la velocidad de conexión entre dos equipos de subred diferente, de ambos extremos de la VPN.
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics{imagenes/ipsec/ipsec_vnc}
+		\caption{Captura de pantalla de una seción de VNC.}
+	\label{fig:ipsec_vnc}
+\end{figure}
+
+Finalmente, se ha comprobado que la conexión se mantenía estable, pero el rendimiento del escritorio remoto se hacía cada vez más ``pesado'' a medida que se acercaba a la franja horaria pico en cuanto a cantidad de conexiones al ISP. A pesar de esto, la comunicación en ningún momento se ha perdido.
+
+\subsection{Buscando vulnerabilidades}
+
+En la comprobación de seguridad de un sistema (en realidad de toda la red), se pueden utilizar varias herramientas que por lo general tienen un costo bastante elevado. Por esta razón es que para estas pruebas se ha utilizado un programa gratuito propiedad de \emph{Tenable Network Security} denominado \gls{Nessus}.
+
+Nessus trabaja en modo cliente y servidor, donde el primero genera el informe y muestra al usuario los resultados del escaner, el segundo realiza el monitoreo en el servidor residente.
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics{imagenes/ipsec/ipsec_top_nessus1}
+		\caption{Captura de pantalla del programa \texttt{top} en OpenBSD.}
+	\label{fig:ipsec_top_nessus}
+\end{figure}
+
+En la Figura \ref{fig:ipsec_top_nessus} se puede ver que el consumo de recursos que utiliza el servidor Nessus para comprobar las vulnerabilidades de los sistemas, es excesivamente elevado, llegando a consumir casi el 99 por ciento de microprocesador durante un largo proceso de escaneo. Además utiliza mucha cantidad de memoria, a tal punto que requiere, en la mayoría de los casos, utilizar la memoria de intercambio \gls{swap}.
+
+\section{Conclusión}
+\label{sec:ipsec_conclusion}
+
+El uso de IPSec para establecer una VPN presenta un gran desafío para los administradores de sistemas. Esto se debe a la dificultad propia de la tecnología que muchas veces pueden llegar a hacer tomar decisiones incorrectas. Como se menciona en \cite{redesprivadasvirtualesconlinux}, según los criptógrafos, la complejidad es un enemigo de la seguridad.
+
+Por esta razón, es necesario establecer una buena política de seguridad previa a la configuración y puesta en funcionamiento de IPSec. Esto implica que si la seguridad del sistema esta comprometida, la implementación de IPSec no va a subsanar el problema. De hecho, las normativas de seguridad son impuesta por los administradores del sistema, IPSec solamente ofrece los mecanismos para asegurarlo.
+
+Nuevamente la utilización de sistemas complejos como IPSec requieren de mucho estudio y práctica en entornos reales. La gran cantidad de conceptos que maneja, pueden llevar a los administradores a filtrar detalles o a pasar por alto normativas que estan fuera del alcance de IPSec.
+
+Por otro lado, si se realiza una buena combinación de protocolos y métodos de autentificación cuidadosamente distribuidos, IPSec puede llegar a ser la mejor solución para mantener enlaces seguros entre las partes.
+
+Además se puede decir que IPSec se encuentra dentro de los protocolos y sistemas más seguros que puedan utilizarse para establecer una VPN red a red entre dos o más enlaces. Pero como se ha mencionado anteriormente, IPSec no protege los gateway ni los ataques de denegación de servicios, por lo que su configuración y puesta en funcionamiento se encuentra estrechamente relacionada con la política de seguridad y de las directivas de un buen firewall protegiendo el equipo y las redes involucradas.
+
+Finalmente el grupo de desarrollo de IPSec esta considerando disminuir la complejidad del mismo, eliminando algunos componentes tales como el modo transporte, el modo agresivo e incluso el protocolo AH. Esto se realiza con el objetivo de simplificar la tarea de los administradores y para que no sea necesario estudiar todas las RFC para aprender a manejar IPSec.

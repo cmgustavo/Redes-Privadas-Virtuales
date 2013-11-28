@@ -1,0 +1,334 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   |-------------------------|                        %
+%   |REDES PRIVADAS VIRTUALES |                        %
+%   |                         |                        %
+%   | Proyecto de graduación  |                        %
+%   |_________________________|                        %
+%                                                      %
+%   Autores                                            %
+%   -------                                            %
+%                                                      %
+% * Formoso Requena, Nicolás Federico (CX02-0239-8)    %
+%     nicolasformoso@gmail.com                         %
+% * Cortez, Gustavo Maximiliano (CX01-0801-9)          %
+%     cmgustavo83@gmail.com                            %
+%                                                      %
+%   Tutores                                            %
+%   -------                                            %
+%                                                      %
+% * Ing. Gustavo Vanetta - vanettag@gmail.com          %
+% * Lic. Miguel Bazzano - miguelbazzano@gmail.com      %
+%                                                      %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% ********* Introducción a las VPN ********** %
+
+\chapter{Introducción}
+\label{chap:funda_introduccion}
+
+Las redes privadas virtuales o VPN\footnote{Virtual Private Network (Red Privada Virtual)}, se están usando de forma masiva tanto por grandes empresas como por PyMEs\footnote{Pequeñas y Medianas Empresas.}, con la finalidad de conectar entre las sucursales de manera económica y segura. En este capítulo se va a definir el concepto y las características más sobresalientes de una VPN.
+
+También se van a desarrollar situaciones de ejemplo en las que conviene utilizar VPN y en cuales se puede seguir utilizando el antiguo método de conexión de redes.
+
+Por último se detallarán los fundamentos de utilización en diferentes ámbitos laborales y su justificación económica y útil para las empresas.
+
+\section{¿Qué es una VPN?}
+\label{sec:que_es_una_vpn}
+
+Una \gls{VPN} no tiene un término sencillo para auto definirse, dado que involucra tres palabras con significado propio que, en conjunto, pueden resumir lo que es una red privada virtual. Por lo tanto, para responder esta pregunta sería conveniente analizar cada término por separado como lo hacen en \cite{redesprivadasvirtualesconlinux}.
+
+El primero de ellos es el término \emph{red}. Por ejemplo una red de computadoras interconectadas de alguna forma entre sí, permite el tráfico de datos entre las terminales conectadas. Es decir, cuando se envía un mensaje de correo electrónico, o cualquier otro tipo de datos desde una computadora a un destino determinado, se pretende que solo el destinatario reciba lo enviado; sobre todo si los datos tienen gran importancia para la empresa, negocio o institución. Esto en definitiva es posible, porque los equipos están ``conectados'' y forman parte de una red de computadoras.
+
+El segundo término es \emph{privada}, la cual es motivo de gran preocupación para administradores de sistemas y consultores de seguridad, ya que es difícil encontrar un entorno seguro al cien por ciento, y todas las personas que se conectan a Internet, pretenden no ser espiadas por ningún tercero. Por ejemplo, al enviar un mensaje de correo electrónico, se pretende que la única persona que lo lea sea el destinatario elegido. En las VPN el tráfico de datos viaja cifrado\footnote{Más adelante se darán más detalles del transporte de datos en un VPN para las diferentes tecnologías utilizadas.}, por lo que se puede suponer la privacidad de la información que se envía entre computadoras o redes en cuestión.
+
+El término \emph{virtual} se refiere a la abstracción de la red físicamente conectada que pueden ``ver'' los usuarios como si de una sola red virtual se tratara. En este caso como las VPN se implementan sobre la pila de protocolos \gls{TCP/IP}, pero los datos se abstraen de manera que los datos VPN en bruto no son compatibles con TCP/IP, entonces se puede decir que una red VPN forma una red virtual sobre cualquier red que utilice TCP/IP, incluso Internet.
+
+De esta manera se obtiene una red (computadoras interconectadas) privada (datos cifrados) y virtual (como si de una red cercana se tratara). Todo esto es a pesar de que las redes puedan estar a kilómetros de distancias.
+
+\subsection{Autenticidad, integridad y confidencialidad}
+
+Las VPN fueron diseñadas para brindar autenticación, integridad y confidencialidad a los datos transmitidos a través 
+de ellas; de ahí lo de Red \emph{Privada}.
+
+\begin{itemize}
+	\item \emph{Autenticación:} Se sabe quién está del otro lado como destino (puede ser un  host o incluso una red).
+	\item \emph{Integridad:} Intención de que los datos no lleguen alterados. Para esto se utilizan funciones de hash.
+	\item \emph{Confidencialidad:} Se pretende que los datos sean interpretados solo por el verdadero destino, y no por quienes (accidentalmente o no) hayan interceptado la información. Para esto se utilizan algoritmos de encriptación como \gls{DES} o \gls{TripleDES}.
+\end{itemize}
+
+Para establecer conexiones entre las máquinas de una red, se requieren elementos de hardware y software. Por ejemplo, en una LAN \footnote{Local Area Network o Red de Área Local}, se necesitan, además de las computadoras: switches, cables, routers, etc. El término \emph{Virtual} indica, como se ha mencionado anteriormente, que la red privada propiamente dicha se establece sobre la infraestructura de otra red; si se sigue el mismo ejemplo de la LAN, una VPN puede establecerse sobre ella, es decir, utilizando sus componentes tanto de hardware como de software. Un esquema generalizado de lo que se quiere lograr con esta comunicación a nivel usuario doméstico, se puede ver en la Figura \ref{fig:diagrama_general_vpn}.
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics{imagenes/general/vpn_general_casas}
+	\caption{Conexión a nivel exterior de una VPN entre dos redes domésticas.}
+	\label{fig:diagrama_general_vpn}
+\end{figure}
+
+\subsection{Observaciones}
+
+Uno de los motivos por lo que se ha extendido la utilización de VPN en las empresas es la facilidad de poner en práctica una solución estable, segura y en relativamente poco tiempo. Por esta razón es que en vez de alquilar un enlace WAN dedicado, es más conveniente económicamente (quizás en seguridad y prestaciones) establecer enlaces de tipo VPN entre los extremos, siempre que ambos estén conectado a Internet.
+
+Con respecto a las desventajas en materia de seguridad tanto en una línea dedicada como en una VPN, las fallas puede provenir no solo de las imperfecciones de la implementación, sino de la interacción humana en el enlace, tanto en una como en otra. Por ejemplo, una línea dedicada puede parecer más segura por tener un único enlace punto a punto, pero también pueden ocurrir cortes de los cables a propósito perdiendo la conexión entre ambos extremos. En las VPN, un usuario malicioso puede interceptar las claves durante el proceso de autenticación y luego hacerse pasar por el extremo de confianza, y así establecer una conexión directa con el extremo de la VPN.
+
+Por otro lado, existe el problema de los clientes móviles, ya que si pierden su equipo, todos los datos de enlace con la VPN quedan vulnerables y a disposición del nuevo poseedor del equipo. De esta manera no sirve de nada la extrema seguridad que se implemente en el servidor VPN, ya que teóricamente el usuario del equipo robado es un ``usuario de confianza''.
+
+\subsection{Ventajas y desventajas}
+
+Las VPN además de tener muchas ventajas frente a otras alternativas, también tienen sus desventajas y a veces su implementación no es la mejor elección, e incluso sería perjudicial optar por ellas.
+
+Se deben analizar cuáles son los puntos a favor y en contra que poseen. Las ventajas son las siguientes:
+
+\begin{description}
+	\item[Integridad, confidencialidad y seguridad de datos] Esto se garantiza mediante la autenticación de usuarios y encriptación de datos. Depende de cuán seguras sean las claves y de la complejidad de los algoritmos de encriptación.
+	\item[Una VPN reduce costos y son sencillas de usar] Al utilizar un VPN no se invierte en infraestructura de red física (si se utiliza Internet, por ejemplo), esto representa un ahorro de varios miles de dólares en la conexión de puntos muy distantes.
+	\item[Facilita la comunicación entre dos usuarios en lugares distantes] Un usuario en París conectado a una VPN de Canadá, puede ver los recursos de la red a la que se conecta como si se encontrara en la misma red local, es decir, las VPN son transparentes a los usuarios finales.
+\end{description}
+
+Las desventajas son las siguientes:
+
+\begin{description}
+	\item[Tiempo de respuesta no garantizado] Si bien los hosts de una VPN \emph{creen} que se encuentran en una misma red local, el tiempo de respuesta depende de la red sobre la que se estableció la conexión; en el caso de Internet, y en los horarios pico de uso, el tiempo de respuesta puede ser muy superior al deseado, haciéndose difícil el uso de aplicaciones críticas.
+	\item[Confiabilidad del enlace] Una VPN, se establece sobre la infraestructura de otra red, por ejemplo Internet; esto hace que nuestra conexión dependa de la estabilidad de los nodos involucrados en las rutas que comunican nuestros hosts. Por ende, puede perderse la conexión, cuando los puntos intermedios se caen.
+	\item[Seguridad] Si bien los protocolos que se utilizan para el establecimiento de las VPN son muy seguros, tienen sus puntos débiles; si un usuario mal intencionado los encuentra podría llegar a violar la privacidad de la comunicación.
+\end{description}
+
+\section{Topologías de las VPN}
+\label{sec:topologias_vpn}
+
+Las topologías de las VPN se derivan unas de otras e incluso pueden estar combinadas. Las tres más generales dependen de la manera en que se conectan los usuarios, que son:
+
+\begin{itemize}
+	\item Conexión host a host (máquina a máquina).
+	\item Conexión host a red (máquina a red).
+	\item Conexión red a red.
+\end{itemize}
+
+\subsection{VPN Host a Host}
+
+Es el modo de conexión más básico. Involucra únicamente a dos hosts: uno actúa como servidor y el otro como cliente VPN (figura \ref{fig:conexion_host_a_host}).
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics{imagenes/general/host_a_host}
+	\caption{Ejemplo de conexión VPN host a host.}
+	\label{fig:conexion_host_a_host}
+\end{figure}
+
+Por un lado se puede pensar que esta topología es innecesaria, ya que está incluida en las otras topologías que se describen a continuación; pero por otra parte, esta topología, al igual que las otras, sigue siendo una solución válida. Por ejemplo en una empresa que posee dos redes conectadas a través de Internet; que no se trafican datos críticos entre ambas, pero que cada cierto tiempo se debe sincronizar información de valor entre dos servidores, uno en cada red. Para esta situación es conveniente establecer un enlace VPN temporal de tipo host a host. Pero si no se tomara alguna medida de seguridad para realizar este trabajo, se estaría exponiendo los servidores a ser espiados por cualquiera que sea capaz de interceptar los datos. Por otro lado, configurar una VPN red a red sería demasiado complejo para este fin, debido a que el tráfico en general no tiene importancia y solo se requiere un tiempo corto para transmitir de un servidor a otro, por lo tanto, la mejor solución para estos casos es una VPN \emph{Host a Host} que se establece entre los servidores solo en el momento de la sincronización.
+
+\subsection{VPN Host a Red}
+
+En empresas de cualquier tamaño, casi siempre existen usuarios móviles, es decir, empleados que salen de las oficinas (o que trabajan desde su casa), pero que necesitan estar conectados a la red de la compañía. Igual que para el caso anterior, se sabe que no es una buena idea permitir el acceso a cualquier usuario o compartir información sin protección (sin cifrado). La figura \ref{fig:conexion_host_a_red} muestra un esquema simplificado de este tipo de conexión.
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics{imagenes/general/host_a_red}
+	\caption{Ejemplo de conexión VPN host a red.}
+	\label{fig:conexion_host_a_red}
+\end{figure}
+
+La implementación de una VPN \emph{Host a Red} es una solución segura para este tipo de situaciones, ya que posee la ventaja de que todo el tráfico que circula a través de ella está encriptado; otro punto a favor de las VPN, es que el host remoto percibirá como si se encontrara dentro de la red local, pudiendo utilizar las direcciones IP privadas de la misma para interactuar con cualquier host de la red, impresora o dispositivo compartido de la red.
+
+\subsection{VPN Red a Red}
+
+Cuando se requiere asegurar el tráfico a través de Internet entre dos redes locales distantes, por ejemplo entre una sucursal y la casa central de una empresa, una VPN \emph{Red a Red} es una solución disponible. La figura \ref{fig:conexion_red_a_red} muestra un esquema de este tipo de conexión.
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics{imagenes/general/red_a_red}
+	\caption{Ejemplo de conexión VPN red a red.}
+	\label{fig:conexion_red_a_red}
+\end{figure}
+
+La conexión se establece entre los servidores VPN de cada red, dichos servidores son los que negocian todos los parámetros asociados a la VPN, haciéndose totalmente transparente a los hosts internos de cada una; tanto es así, que no es necesario reemplazar el software instalado en los equipos, ni configurar de manera especial (esta transparencia vale también para las otras topologías).
+
+\section{Interacción con el Firewall}
+\label{sec:interaccion_con_el_firewall}
+
+En casi toda red de computadoras, existe un firewall; esto es un equipo (dedicado o no), cuya tarea es bloquear o permitir el tráfico de paquetes desde o hacia Internet, u otra red vecina.
+
+Es importante que el firewall de la red ``sepa'' reconocer el tráfico VPN de los demás, ya que un error en la configuración del mismo, puede dar lugar a que personas mal intencionadas ingresen a la red privada.
+
+Vale aclarar que es necesario un servidor VPN solo en los casos de implementación de topologías red a red, o host a red. Para las VPN host a host, deberán crearse reglas explícitas en el firewall que controlen el tráfico de las conexiones, pero la función de servidor la cumple uno de los dos hosts involucrados en la VPN. Sobre este tema, véase la Sección \ref{sec:topologias_vpn} en este mismo capítulo.
+
+Para el trabajo en conjunto de una VPN con el firewall, se han encontrado tres maneras de interactuar:
+
+\begin{itemize}
+	\item VPN y firewall en el mismo equipo.
+	\item VPN en paralelo con el firewall.
+	\item VPN detrás del firewall.
+\end{itemize}
+
+\subsection{Servidor VPN y Firewall en el mismo equipo}
+
+Esta opción consta de un solo equipo en el cual conviven el firewall y servidor VPN, es decir, por este pasa el tráfico directo a Internet (sin encriptación), y el de las conexiones VPN (con cifrado). Este equipo debe tener dos tarjetas de red, una conectada a la red local, y la otra hacia Internet (u otra subred), como se muestra en la Figura \ref{fig:vpn_firewall_1}.
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics{imagenes/general/vpn_firewall_1}
+	\caption{Servidor VPN y Firewall en un mismo equipo.}
+	\label{fig:vpn_firewall_1}
+\end{figure}
+
+Las ventajas de esta solución se listan a continuación:
+
+\begin{itemize}
+	\item Al tener todo en un solo equipo, se simplifica el mantenimiento, ya que todo está centralizado en él.
+	\item Se pueden crear reglas con el firewall, que se apliquen solo al tráfico de la VPN, con las mismas herramientas que se utilizan para el tráfico de Internet.
+\end{itemize}
+
+Las desventajas son las siguientes:
+
+\begin{itemize}
+	\item Se tiene solo un punto que controla toda la seguridad de la red; se debe tener la certeza que está bien configurado, ya que cualquier falla puede dejar una puerta abierta a personas mal intencionadas.
+	\item El tráfico normal de Internet y el de VPN competirán por los recursos del equipo, por lo que es posible que en este caso, sea necesario un equipo más potente.
+\end{itemize}
+
+\subsection{Servidor VPN en paralelo con el Firewall}
+
+Ciertos firewalls no reconocen otros protocolos que no sean los de la suite TCP/IP. Cuando se implemente la VPN es necesario nuevos protocolos, por ejemplo \gls{GRE}, protocolo de transporte para VPNs con PPTP.
+
+Al tener un firewall ya implementado en el sistema, de manera que no se pueda modificar (ya sea por las dificultades que presenta, o porque se ha adquirido algún producto comercial sin posibilidades de ampliar servicios), puede que esta sea una buena opción para no tener que cambiar todos los equipos.
+
+Con respecto al ruteo, cada host dirige su tráfico; si es directo a Internet pasa a través del firewall, si es a una conexión VPN, pasa a través del servidor VPN. No conviene la configuración de rutas estáticas en los hosts cuando estos son numerosos (o hay posibilidad de que lo sean), ya que es un trabajo tedioso y muy sujeto a errores humanos.
+
+Las posibilidades más simples son, establecer en el firewall las rutas hacia el servidor VPN, de modo que cualquier paquete VPN que llegue al firewall, este lo redirigirá al lugar correcto; también es posible conectar un router entre el firewall y el servidor VPN, de modo que todos los paquetes se dirijan al router y este los envíe al sitio correcto. Un esquema ilustrativo de esta situación, puede verse en la Figura \ref{fig:vpn_firewall_2}.
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics{imagenes/general/vpn_firewall_2}
+	\caption{Servidor VPN y Firewall en equipos diferentes.}
+	\label{fig:vpn_firewall_2}
+\end{figure}
+
+Con cualquiera de estas dos posibilidades, en los hosts basta configurar la puerta de enlace predeterminada. Las ventajas de este modo de conexión son:
+
+\begin{itemize}
+	\item Con este esquema los flujos de paquetes de las VPN no compiten por recursos del mismo equipo con el resto del tráfico, con lo que se gana rendimiento.
+	\item Se obtiene mayor escalabilidad, ya que si se requiere agregar más servidores VPN para repartir la carga de las conexiones, solo se deben conectar en paralelo con los equipos ya instalados.
+\end{itemize}
+
+Las desventajas de este método de conexión pueden ser las siguientes:
+
+\begin{itemize}
+	\item Ahora existen dos puntos conectados al router de salida, por lo que aumenta la carga en cuanto al mantenimiento e inspección de seguridad. Ahora se tienen que controlar dos o mas equipos.
+	\item Aumentan los costes en gastos de equipos y el mantenimiento de los mismos.
+\end{itemize}
+
+\subsection{Servidor VPN detrás del Firewall}
+
+Se pueden centralizar las entradas y salidas a Internet solamente a través del firewall, para ganar en seguridad y simplificar el mantenimiento, conectando el servidor VPN directo a la LAN y directo al firewall. Esto último puede hacerse con un cable cruzado para evitar el retardo normal de un switch. Esto se puede observar en la Figura \ref{fig:vpn_firewall_3}.
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics{imagenes/general/vpn_firewall_3}
+	\caption{Servidor VPN detrás del Firewall.}
+	\label{fig:vpn_firewall_3}
+\end{figure}
+
+Respecto al ruteo, se debe hacer lo mismo que para el \emph{servidor VPN en paralelo con el Firewall}. Las ventajas que pueden mencionarse son las siguientes:
+
+\begin{itemize}
+	\item Se tiene solo un punto de flujo de paquetes desde y hacia la red local, por lo que se simplifica el mantenimiento.
+	\item Las restricciones del tráfico VPN están ubicadas únicamente en el servidor VPN.
+	\item Se gana en seguridad para la VPN, ya que el servidor no está conectado directamente a Internet.
+\end{itemize}
+
+Las desventajas son:
+
+\begin{itemize}
+	\item Todo el tráfico VPN debe pasar por el firewall, lo que introduce cierta latencia en las comunicaciones.
+	\item El firewall debe soportar protocolos distintos a los de la suite TCP/IP, ya que los paquetes VPN circulan encapsulados con, por ejemplo, el protocolo GRE, en una VPN PPTP.
+\end{itemize}
+
+\section{Justificación de las VPN}
+\label{sec:justificacion_vpn}
+
+En esta sección se tienen en cuenta aspectos que llevan a tomar la importante decisión de implementar o no un VPN en la empresa.
+
+Resulta imprescindible tener en cuenta el aspecto económico, ya que cuanto menos costosa la implementación, más viable resulta el proyecto. También se tienen en cuenta los aspectos de seguridad, ya que siempre es necesario transmitir datos confidenciales que requieren especial cuidado para que no caigan en manos no autorizadas.
+
+Finalmente se debe tener en cuenta que la implementación de una VPN no debería cambiar la infraestructura de la empresa, ni el modo de trabajar de los usuarios. Por eso es necesario que la instalación y uso de la misma sea transparente a los usuarios.
+
+\subsection{Económico}
+
+Una VPN es el modo barato de conectar dos redes (que pueden estar distantes) y de forma segura. Suponiendo que una empresa quiera unir sus oficinas de Argentina y España, en una sola ``Gran Red'', unas líneas alquiladas o un enlace satelital supondrían varios miles de dólares tanto para la implementación, como para el mantenimiento de los mismos; algo muchas veces difícil de justificar, y afrontar para las empresas.
+
+La configuración de una VPN, sería la solución más económica en este caso, ya que el gasto es significativamente menor en infraestructura, mantenimiento y capacitación del personal.
+
+\subsection{Seguridad}
+
+Si bien es cierto que datos confidenciales de nuestra empresa pueden estar viajando, en el caso de una VPN, a través de la red pública, estos son cifrados en el origen con algoritmos muy complejos, de modo que puedan ser des-cifrados únicamente por el destino deseado.
+
+Una VPN permite asegurar de una sola vez distintos protocolos: HTTP, POP3, SMB, etc. Lo cual representa una gran ventaja en tiempo y dinero, ante la idea de asegurar cada protocolo por separado.
+
+Vale aclarar que las VPN, no aseguran todo el tráfico hacia Internet, sino solo el que fluye a través de ella.
+
+\subsection{Transparencia}
+
+La implementación de una nueva tecnología, trae como consecuencia, una gran resistencia por parte de los empleados que se ven obligados a utilizarla.
+
+No es este el caso de las VPN, ya que es transparente a los usuarios. Continuando con el ejemplo visto anteriormente, al unir las oficinas de Argentina y España, los empleados percibirán como si se encontraran en una misma red.
+ 
+Se puede decir entonces, que la implementación de la VPN, no requiere nuevos conocimientos por parte de la mayoría de los usuarios de la misma. Otra ventaja es que no se necesita reemplazar el software que se está utilizando.
+
+\section{Consideraciones importantes}
+\label{sec:intro_consideraciones_importantes}
+
+En esta sección se van a plantear las diferentes tecnologías que en un tiempo fueron competidores directos de las VPN, aunque mucho antes de que éstas existieran, eran las únicas opciones para asegurar dos o más redes.
+
+También se mencionará la importancia de planificar un buen diseño de la VPN para no comprometer la seguridad de la empresa, y además, de algunos aspectos de administración de las claves.
+
+Por último se listarán los casos en que la implementación de una VPN se considera una buena opción y en los que pueden ser una verdadera pérdida de tiempo.
+
+\subsection{Comparación con otras tecnologías}
+
+Las VPN se pueden comparan con tecnologías \gls{RAS} y con las líneas dedicadas. La primera permitía a las personas trabajar desde su hogar y conectarse a la empresa por módem mediante marcado telefónico por tonos. Esta tecnología presentaba un problema de seguridad, que permitía la conexión a cualquier persona que conociera el número telefónico del sistema, que luego fue resuelto mediante el sistema de \emph{re-llamada}. Otra limitación de este sistema es su velocidad, que rondaba los 54 Kbps, y además, por cada conexión se requería de un módem receptor. Por esta razón es que su implementación resultaba muy costosa cuando se debía conectar un gran número de clientes.
+
+Las líneas dedicadas pueden resultar recomendables en algunas aplicaciones. Por ejemplo si se tiene una base de datos que replica datos regularmente y que además se realizan consultas constantemente y actualizaciones de forma intensiva, entonces se requiere del mayor ancho de banda posible, lo cual se consigue con líneas dedicadas o con tecnologías \gls{MPLS}.
+
+Algunas empresas de telecomunicaciones ofrecen conectividad mediante \gls{FrameRelay}, cuyo cometido es la transmisión de información a alta velocidad entre puntos geográficamente distantes, mediante una red de alta velocidad, con una máxima seguridad y calidad. Esta conexión se realiza a través de circuitos virtuales permanentes (PVC), con ancho de banda bajo demanda y con un \emph{throughput} garantizado que permite alcanzar la velocidad convenida, que va de los 64 Kbps hasta los 2 Mbps, dependiendo del \emph{carrier}.
+
+Esta tecnología soporta cualquier aplicación que requiera alto grado de conectividad tipo malla o tráfico de datos tipo ráfaga, con características de bajo retardo y calidad de servicio incluida. En este apartado, cabe aclarar, que mediante la conexión a Internet no se consigue calidad de servicio como lo permiten las líneas dedicadas.
+
+Otra de las tecnologías que utilizan los ISP para interconectar sitios de una empresa, es la recientemente mencionada MPLS, que dispone (según el plan de contrato) de velocidades hasta 1 Gbps. Además el servicio se encuentra subdividido de acuerdo a lo crítico que sea la transmisión, tanto para aplicaciones en tiempo real, de misión crítica o estándar. Por su parte, esta tecnología es un poco más económica que las líneas dedicadas, pero aún así mucho más costosa que una solución VPN propuesta en este trabajo.
+
+Una desventaja importante de las líneas dedicadas, es su elevado costo. Una instalación completa por año puede llegar a valer unos 40000 dólares; sin contar los costos de mantenimiento. En definitiva, este es un gasto casi imposible de afrontar por una empresa mediana o en crecimiento, por lo que esta solución para unir dos redes de la empresa no es viable.
+
+De esta manera, se han dado los créditos a la implementación de una VPN con software libre, que permite la transmisión de datos de manera segura (como el caso de Frame Relay o MPLS) y a bajo costo. Por ejemplo, el primer año de implementación y funcionamiento de una VPN puede llegar a costar unos 6000 dólares, que incluye un enlace punto a punto, soporte a clientes móviles y mantenimiento mensual moderado (ver más detalles en \ref{subsec:comparativa_costos}), limitándose los años siguientes solamente a costos administrativos. Además no sería necesario invertir en otras líneas dedicadas (en caso de querer unir otras redes), ni en migraciones o en escalabilidad.
+
+A pesar de ello, las grandes empresas optan generalmente por soluciones heterogéneas, donde en algunas aplicaciones y sectores se pueden implementar VPN con software libre, mientras que en otras áreas más críticas, se utilizan soluciones comerciales como líneas dedicadas, MPLS o VPN con hardware propietario.
+
+\subsection{Planificación de seguridad}
+
+Para que las VPN funcionen bien dependen de muchos factores, no solo de la elección del mejor cifrado ni el firewall más robusto y seguro que existe\footnote{Es necesario aclarar que, en realidad, no existe el mejor cifrado ni firewall.}. Si no se planifica cuidadosamente el diseño de una VPN, la red entera puede ser vulnerable aún con la VPN en funcionamiento.
+
+Para planificar se debe involucrar a toda la gente que tenga que ver con el funcionamiento del sistema y con los servicios que ya se estaban utilizando. Por eso se requiere una buena comunicación entre las personas que trabajen implementando la VPN y además se debe asegurar que los administradores de sistemas, de redes y base de datos revisen el diseño.
+
+Además se debe tener documentada la red completa, y cualquier cambio que se realice para la implementación de la VPN, debe ser también documentado. El diseño es un aspecto clave antes de poner en práctica el sistema, en donde también se incluyen aspectos como la estrategia de administración de claves, los métodos de cifrado utilizados, la política de seguridad del firewall, entre otros.
+
+\subsection{Administración de claves}
+
+La estrategia de administración de claves es un punto importante en la planificación de una VPN para las empresas. Por ejemplo se deben tener en cuenta las claves que utiliza un usuario móvil, ya que si su portátil es robada, dichas claves deberían ser revocadas inmediatamente, para no comprometer a toda la red de la empresa.
+
+En algunos casos se utilizan más de una clave, y hasta se generan claves cada cierto tiempo, de manera que si una clave es comprometida, automáticamente se negocie otra distinta. De esta manera se evitan algunos problemas de seguridad, pero para esto, se debe tener una planificación rigurosa en cuanto a los métodos de revocación de claves y a otras fallas en la VPN.
+
+Por otro lado, para asegurar la confidencialidad y autenticación se deben generar las claves correctamente. Algunos sistemas criptográficos son vulnerables a ataques de análisis criptográfico porque las claves no se han generado de forma que sean seguras y no fácilmente discernibles. En este caso se utiliza \gls{OpenSSL} para la generación de las claves.
+
+En ambos extremos de una VPN se necesitan claves para cifrar y descifrar, que deben ser transmitidas entre los sitios de forma segura. Se pueden hacer manualmente o mediante mecanismos de privacidad como \gls{PGP}. Si la VPN utiliza clave pública, se requieren dos pares de claves, por lo que se necesitaría de un tercero de confianza para generar las claves. Este tercero puede no resultar un medio fiable para confiar la VPN, por lo que dicha parte debe también tener una buena política de seguridad para evitar estos problemas de confianza.
+
+\subsection{Motivos de requerir una VPN}
+
+En algunos casos, utilizar un VPN puede resultar la mejor opción, mientras que en otros sería una pérdida de tiempo y dinero. En el siguiente listado se resume en qué casos el uso de una VPN es la mejor opción:
+
+\begin{itemize}
+	\item Asegurar un cierto número de recursos e información que atraviesan varias redes.
+	\item Hacer que todos los host parecieran estar en una misma red, aunque se encuentren a kilómetros de distancia.
+	\item Si se cuenta con usuarios móviles que requieren tener acceso transparente a la red de la empresa.
+	\item Se requiere administrar los servidores de forma remota por un canal seguro.
+\end{itemize}
+
+Estos casos que requieren de una VPN, hacen que una empresa separada físicamente, pueda tener una infraestructura de red segura, pero sin perder interacción con los clientes y usuarios móviles. En este caso, una VPN puede asegurar todos los servicios que se utilicen en la empresa.
+
+Por otro lado, si lo que se requiere es solamente asegurar ciertos protocolos o servicios entre un par de hosts, la implementación de una VPN requeriría un gran esfuerzo para un problema simple. Por eso para asegurar dos hosts basta con utilizar software de tunelado de un puerto a otro a través de un canal cifrado y autenticado como \gls{SSH}.

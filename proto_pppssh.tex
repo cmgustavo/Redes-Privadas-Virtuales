@@ -1,0 +1,488 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   |-------------------------|                        %
+%   |REDES PRIVADAS VIRTUALES |                        %
+%   |                         |                        %
+%   | Proyecto de graduación  |                        %
+%   |_________________________|                        %
+%                                                      %
+%   Autores                                            %
+%   -------                                            %
+%                                                      %
+% * Formoso Requena, Nicolás Federico (CX02-0239-8)    %
+%     nicolasformoso@gmail.com                         %
+% * Cortez, Gustavo Maximiliano (CX01-0801-9)          %
+%     cmgustavo83@gmail.com                            %
+%                                                      %
+%   Tutores                                            %
+%   -------                                            %
+%                                                      %
+% * Ing. Gustavo Vanetta - vanettag@gmail.com          %
+% * Lic. Miguel Bazzano - miguelbazzano@gmail.com      %
+%                                                      %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% ************* VPN usando PPP sobre SSH ************* %
+
+\chapter{VPN usando PPP sobre SSH}
+\label{chap:vpn_pppsobressh}
+
+En este capítulo se describirá un modo de establecer una VPN entre dos redes distantes de forma segura. Para esto se utiliza el protocolo PPP y la herramienta SSH, de las cuales se darán una breve introducción teórica.
+
+Además se detallarán los procesos de creación y distribución de las claves utilizadas para ingresar en el sistema mediante SSH, la configuración de ruteo y del firewall de cada red.
+
+\section{Protocolo PPP}
+\label{sec:proto_ppp}
+
+El protocolo \gls{PPP} permite establecer una comunicación a nivel de enlace entre dos computadoras. Utilizado comúnmente para establecer la conexión a Internet de un particular con su proveedor de acceso a través de un módem telefónico. También utilizado sobre conexiones de banda ancha (como PPPoE o PPPoA). Además del simple transporte de datos, PPP facilita dos funciones importantes:
+
+\begin{itemize}
+\item Autenticación. Generalmente mediante una clave de acceso (que en nuestro caso no será necesario).
+\item Asignación dinámica de IP. Los proveedores de acceso cuentan con un número limitado de direcciones IP y cuentan con más clientes que direcciones. Naturalmente, no todos los clientes se conectan al mismo tiempo. Así, es posible asignar una dirección IP a cada cliente en el momento en que se conectan al proveedor. La dirección IP se conserva hasta que termina la conexión por PPP. Posteriormente, puede ser asignada a otro cliente.
+\end{itemize}
+
+PPP soporta, entre otros, los tipos de autenticación PAP y CHAP. La primera, es la más insegura, ya que envía nuestro usuario y contraseña en texto claro a través de la red; la segunda encripta estos datos, para que no puedan ser leídos.
+
+Una gran desventaja de este protocolo, es que no proporciona cifrado de datos, por lo que todo el flujo de información de una conexión PPP es enviada en claro, de modo que si alguien está capturando los paquetes transmitidos, puede leer toda la carga que se envía y recibe, teniendo acceso a nuestra información privada.
+
+\section{Protocolo y aplicación SSH}
+\label{sec:proto_ssh}
+
+\gls{SSH} o \emph{intérprete de comandos seguro} es el nombre de un protocolo y el programa que lo implementa. Sirve para acceder a máquinas remotas a través de una red. Permite manejar por completo la computadora mediante un intérprete de comandos, y también puede redirigir el tráfico de X para poder ejecutar programas gráficos si se tiene un Servidor X\footnote{Sistema gráfico utilizado en sistemas Unix}.
+
+Además de la conexión a otras máquinas, SSH permite copiar datos de forma segura (tanto archivos sueltos como simular sesiones FTP cifradas), gestionar claves RSA para no escribir claves al conectar a las máquinas y pasar los datos de cualquier otra aplicación por un canal seguro tunelizado mediante SSH.
+
+La primera versión del protocolo y el programa eran libres, pero su licencia fue cambiando y terminó apareciendo la compañía SSH Communications Security, que lo ofrecía gratuitamente para uso doméstico y académico, pero exigía el pago a otras empresas.
+
+La implementación libre por excelencia, llamada \emph{OpenSSH}, es la que se va a utilizar en este proyecto; debido a que -según sus desarrolladores (los mismos que desarrollaron OpenBSD)- es más segura que la original.
+
+\subsection{Seguridad}
+
+SSH trabaja de forma similar a como se hace con telnet. La diferencia principal es que SSH usa técnicas de cifrado que hacen que la información que viaja por el medio de comunicación vaya de manera no legible y ninguna tercera persona pueda descubrir el usuario y contraseña de la conexión ni lo que se escribe durante toda la sesión.
+
+\section{Descripción General de la VPN}
+
+La topología seleccionada para esta implementación, es de red a red; esto nos permite hacer que las redes locales involucradas tengan la impresión de que están unidas simplemente por un router, mientras que en realidad, puede que se encuentren a kilómetros de distancia. La Figura \ref{fig:vpn_detras_fw} muestra las dos redes, y la VPN establecida entre ellas. 
+
+En cada una de las subredes hay un solo punto de entrada/salida a Internet, donde se implementa el firewall. Detrás de este se encuentra toda la red local, y el Servidor VPN, que puede definir sus propias reglas de filtrado de paquetes para sus conexiones.
+
+Todo el flujo de datos que se dirige a Internet, va directo por la puerta de enlace; los paquetes que pertenecen a la conexión VPN, se dirigen primero al servidor VPN, para luego salir por la puerta de enlace.
+
+En la realidad, para este modo de establecer una VPN, no se utiliza ningún protocolo específico para redes privadas virtuales. A lo que se denomina servidor VPN, y cliente VPN \textendash en este caso\textendash, en realidad serían el servidor SSH y el cliente SSH, ya que este es el protocolo que establece la conexión entre ambos puntos.
+
+Los servidores VPN se implementan sobre \emph{GNU/Linux Ubuntu Server 8.04}. Para saber más detalles sobre las redes que se utilizaron para las pruebas, véase el Apéndice \ref{appendix:equipos_de_prueba}. 
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{imagenes/red-red/vpn_detras_fw}
+\caption{Servidor VPN detrás del Firewall}
+\label{fig:vpn_detras_fw}
+\end{figure}
+
+\section{Funcionamiento}
+
+El servidor VPN (ubicado en la red \emph{casa.lan}), espera conexiones SSH en un puerto distinto al 22 \textendash que es el estándar para este protocolo\textendash, tomado para evitar que se mezclen los paquetes SSH de las Shells estándar, con los de las conexiones VPN; esto, a fines de un mayor control sobre quién se conecta a la red local.
+
+Debido a que este servidor se encuentra detrás del firewall/puerta de enlace, se debe hacer una redirección hacia dicho servidor, de todos los paquetes que quieran entrar o salir por el puerto en el que se están escuchando las conexiones VPN.
+
+Por su parte, el cliente (ubicado en la red \emph{red.lan}) que desea efectuar una conexión VPN, debe utilizar los protocolos ppp y ssh, para lograrlo.
+
+En la puerta de enlace de la red cliente, no es necesario hacer ningún cambio adicional (a nivel de reglas de firewall, redireccionamiento o nat) para que funcione esta VPN.
+
+Cuando se establece la conexión, en ambos servidores se crea una nueva interfaz, por ejemplo \emph{ppp0}, a través de la cual se envía y recibe el flujo de datos de la red contraria. A esta interfaz se asocia una dirección IP; para esto se ha elegido \texttt{192.168.254.1} para el servidor, \texttt{192.168.254.2} para el cliente. La máscara de subred de estas direcciones es \texttt{255.255.255.255}, por lo que pueden crearse cuantos pares de direcciones se deseen para distintas VPN, siempre que no haya solapamiento.
+
+Vale aclarar, que las denominaciones cliente y servidor VPN, cobran sentido solo para el establecimiento de la conexión, ya que solo el cliente puede solicitarlo. Cuando la conexión está establecida, los datos pueden requerirse indistintamente de una red, como de la otra; no existe jerarquía entre ellos. Es por este motivo se llama \emph{servidor VPN} también al cliente.
+
+\subsubsection{El enrutamiento}
+
+El establecimiento de las rutas, luego de la conexión, es importante para que las redes puedan traficar datos entre ellas; de otro modo, por más que la conexión esté establecida, no podrán compartir información.
+
+Hay más de una forma de definir las rutas entre las redes, pero no todas permiten que la VPN sea transparente, ya que requieren modificaciones en los terminales de usuarios. En este caso se requiere que en los hosts internos no tengan que agregar o quitar nada para que la conexión VPN funcione, por lo tanto, se establecen las rutas solo en el servidor VPN y en la puerta de enlace. Esta situación se ve reflejada en la Figura \ref{fig:vpn_detras_fw}.
+
+Suponiendo que la puerta de enlace predeterminada en \emph{casa.lan} tiene la dirección \texttt{192.168.1.2} y el Servidor VPN \texttt{192.168.1.3}. Del otro lado, en \emph{red.lan}, el gateway por defecto tiene la dirección \texttt{192.168.0.1} y el servidor VPN \texttt{192.168.0.2}.
+
+De esta manera se pretende que los hosts de las redes se vean entre sí, es decir, que cuando el nodo \texttt{192.168.0.20} quiera conectarse con \texttt{192.168.1.7} (aunque estén en redes diferentes) pueda hacerlo sin modificación alguna de sus rutas. Por esto, se debe establecer en la puerta de enlace de \emph{casa.lan} que cuando llegue un paquete dirigido a la red \texttt{192.168.0.0/24} lo envíe al servidor VPN local, ya que este conoce la ruta. Se puede hacer mediante el siguiente comando (como superusuario):
+
+\begin{verbatim}
+# route add 192.168.0.0/24 192.168.1.3
+\end{verbatim}
+
+La puerta de enlace enviará al servidor VPN todos los paquetes que tienen como destino la red contraria, por lo tanto, se debe especificar por dónde deberán llegar a la misma. Cuando se ha establecido la conexión VPN, se ha creado en cada servidor, una nueva interfaz llamada \emph{ppp0}, asociada a una dirección IP. Esta interfaz es la que comunica una red con la otra a través del túnel SSH, y en la red \emph{casa.lan} tiene la dirección \texttt{192.168.254.1}. Con la siguiente línea todos los paquetes que llegue al servidor con destino la red \texttt{192.168.0.0/24} se enviarán por la interfaz ppp0 a dicha red.
+
+\begin{listing}[style=consola, numbers=none]
+# route add -net 192.168.0.0/24 gw 192.168.254.1
+\end{listing}
+
+Ahora en \emph{red.lan}, se debe hacer lo mismo, es decir, en el gateway por defecto se agrega la dirección del servidor VPN:
+
+\begin{listing}[style=consola, numbers=none]
+# route add 192.168.1.0/24 192.168.0.2
+\end{listing}
+
+Y luego la ruta que lleva a la otra red por la interfaz ppp0:
+
+\begin{listing}[style=consola, numbers=none]
+# route add -net 192.168.1.0/24 gw 192.168.254.2
+\end{listing}
+
+Nótese que la sintaxis del comando ``route'' varía entre las puertas de enlace y en los servidores VPN, esto se debe a que poseen sistemas operativos distintos: OpenBSD y GNU/Linux respectivamente. En cada caso, ver la página del manual para más información \cite{man}.
+
+\subsection{Envío y recepción de paquetes}
+
+Si se tiene una VPN establecida entre el cliente y el servidor mencionados anteriormente, y ahora el host \texttt{192.168.0.20} de la red \emph{red.lan} desea probar si el host \texttt{192.168.1.7} se encuentra activo, se ejecuta el comando \texttt{ping 192.168.1.7}, que envía paquetes \emph{ICMP Echo Request} al destino especificado, y este último responderá con paquetes \emph{ICMP Echo Replay} para notificar al origen positivamente. 
+
+El host \texttt{192.168.0.20} tiene configurado en su tabla de ruteo solamente el gateway por defecto, por lo que al ejecutar el comando \texttt{ping 192.168.1.7} y no encontrar en la tabla una ruta directa hacia la red \texttt{192.168.1.0/24} (o a dicho host), envía los paquetes por la ruta predeterminada.
+
+Esta ruta predeterminada es la puerta de enlace al mundo exterior, la que deberá conocer el camino hacia la red \texttt{192.168.1.0/24}, y que no es precisamente enviando los paquetes a través de Internet \textendash ya que son direcciones de una red privada \textendash, sino enviándolos al servidor VPN. Por lo tanto, el gateway por defecto debe tener explícitamente una ruta hacia el la red contraria.
+
+Cuando los paquetes ICMP Echo Request enviados por el host \texttt{192.168.0.20} llegan al servidor VPN de la red, este conoce el camino hacia la otra red: a través de la interfaz \emph{ppp0} mencionada anteriormente, y que es el enlace PPP encapsulado en la conexión SSH.
+
+Por lo tanto, lo que el servidor hace, es añadir a los paquetes ICMP Echo Request las correspondientes cabeceras PPP (que son de nivel de enlace de datos), donde se encuentra la dirección IP destino (asociada con la interfaz ppp0).
+
+Estas tramas PPP son encapsuladas en paquetes SSH, cuya dirección origen es el servidor VPN (la dirección local), y dirección destino la dirección pública de la red donde se encuentra el servidor VPN destino.
+
+Cuando los paquetes llegan a la puerta de enlace de la red destino, este los envía al servidor VPN local, analiza el contenido y lo envía al host destino.
+
+Para que la VPN sea realmente transparente a los usuarios finales de cada red, el encaminamiento es un punto muy importante. En la Figura \ref{fig:resultado_redared} se muestra el diagrama de red que los hosts percibirán luego de establecer la conexión VPN.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{imagenes/red-red/resultado_redared}
+\caption{Luego del establecimiento de la VPN Red a Red}
+\label{fig:resultado_redared}
+\end{figure}
+
+El esquema de direcciones de \emph{red.lan} es \texttt{192.168.0.0/24} y el de \emph{casa.lan} es \texttt{192.168.1.0/24}; a partir de la Figura \ref{fig:resultado_redared}, si el usuario \texttt{192.168.0.20} ejecuta el comando \texttt{ping 192.168.1.7} \textendash y los caminos en el router están bien configurados \textendash, el host \texttt{192.168.0.20} debería recibir la respuesta de sus ICMP ECHO REQUESTs del host solicitado.
+
+\section{Configuración del Servidor VPN}
+\label{sec:pppssh_configuracion_servidor}
+
+Es importante ser cauteloso a la hora de configurar un servicio que se brindará hacia afuera, ya que no hay que dejar huecos o puertas traseras que puedan ser utilizadas para introducirse en el sistema local, y poner en riesgo a toda red.
+
+La ventaja de utilizar como servidor VPN un sistema derivado de Unix \textendash GNU/Linux en este caso \textendash es que son muy flexibles en lo que se refiere a configuración de seguridad, y están (desde su concepción) dotados de varias capas de seguridad, y preparados para funcionar como verdaderos servidores.
+
+En esta sección se describirá cómo poner a punto el servidor VPN, con un grado de seguridad más elevado.
+
+\subsection{Directivas de firewall}
+
+Como se ha mencionado anteriormente, el servidor VPN escuchará las conexiones SSH que ingresen por el puerto 9876. Pero debido a que dicho servidor se encuentra detrás del firewall, esta escucha se limita a la red local. Para que se pueda escuchar incluso las conexiones que provengan desde internet, se debe redireccionar en el firewall a dicho puerto. 
+
+Esto se logra agregando una línea en el archivo de configuración del firewall, como se muestra en la Configuración \ref{config:pf.conf.sshppp}.
+
+\begin{configuracion}
+\begin{listing}[style=configuracion]
+rdr pass on $ext_if proto tcp from any to any port 9876 -> $server_vpn
+\end{listing}
+\caption{Líneas en el archivo \texttt{/etc/pf.conf}}
+\label{config:pf.conf.sshppp}
+\end{configuracion}
+
+De la Configuración \ref{config:pf.conf.sshppp}, \$ext\_if es la interfaz conectada al proveedor de internet, y \$server\_vpn es define la dirección IP de dicho servdidor.
+
+Para refrescar las directivas del Packet Filter sin tener que reiniciar el equipo se ejecuta el siguiente comando:
+
+\begin{listing}[style=consola, numbers=none]
+$ sudo pfctl -f /etc/pf.conf
+$
+\end{listing}
+
+\subsection{Activando el Port Forwarding}
+
+Para poder recibir conexiones desde el exterior de la red, es decir, para que un ordenador remoto pueda conectarse con el servidor VPN interno de la red, se debe activar el \emph{port forwarding}, con el siguiente comando:
+
+\begin{listing}[style=consola, numbers=none]
+$ sudo /sbin/sysctl -w net.ipv4.ip_forward=1
+$
+\end{listing}
+
+Para que se accione cada vez que se inicia el equipo, se debe agregar la siguiente línea en el archivo \texttt{/etc/sysctl.conf}:
+
+\begin{verbatim}
+net.ipv4.ip_forward=1
+\end{verbatim}
+
+\subsection{Creando un nuevo usuario}
+\label{subsec:crear_user_enserver}
+
+Cuando el cliente VPN\footnote{El servidor VPN que actúa como cliente al momento de la conexión} intenta establecer la conexión, debe conectarse a través de SSH al servidor VPN y levantar el demonio PPPD; para estos fines es que se crea un nuevo usuario del lado del servidor. Este usuario estará restringido en casi todo aspecto.
+
+Antes de crear el usuario, se crea un grupo para el mismo de igual nombre:
+
+\begin{listing}[style=consola, numbers=none]
+$ sudo addgroup sshvpn
+$ sudo adduser --home /home/sshvpn --ingroup sshvpn --disabled-login sshvpn
+\end{listing}
+
+Nótese que ambas líneas comienzan con \emph{sudo}, este comando se utiliza para que un usuario que no posee privilegios de administrador, pero si permiso para ejecutar comandos que requieren estos privilegios, a través de este programa, pueda hacerlo. Por ejemplo, los comandos \emph{addgroup} y \emph{adduser} solo pueden ser ejecutados por el usuario administrador, y por quienes hayan sido autorizados para hacerlo a través del comando \emph{sudo}. (Ver más detalles en \cite{man}).
+
+La primera línea, sencillamente lo que hace es añadir un nuevo grupo al sistema, llamado \emph{sshvpn}.
+
+La segunda línea añade nuestro usuario. Este tendrá como directorio de trabajo \emph{/home/sshvpn}; como grupo \emph{sshvpn}; no podrá ser accedido directamente como una cuenta local, por lo que no poseerá password (\emph{--disabled-login}), y su nombre será \emph{sshvpn}.
+
+\subsection{Configuración de \emph{sudo}}
+\label{subsec:conf_sudo_enserver}
+
+El nuevo usuario del servidor, debe ser capaz de levantar el demonio \texttt{pppd}, a fines de establecer la conexión. Como los demonios solo pueden ser ejecutados por el administrador, se deben dar permiso a nuestro usuario para que lo haga a través del programa \emph{sudo}, sin darle permisos de superusuario. Para modificar la configuración del sudo, debe editarse el archivo \texttt{/etc/sudoers} (más detalles en \cite{man}), con el programa \texttt{visudo}, y se agrega la línea:
+
+\begin{verbatim}
+sshvpn ALL=NOPASSWD: /usr/sbin/pppd
+\end{verbatim}
+
+Luego el usuario \emph{sshvpn} ya tiene permisos para ejecutar el demonio \emph{pppd}, y sin necesidad de introducir una contraseña. Esto es importante ya que se pretende que la conexión se establezca automáticamente por sí misma, con la menor (o nula) intervención posible de una persona. En Linux, el demonio \emph{pppd} está ubicado en /usr/sbin, pero esto puede variar en otras distribuciones.
+
+Cabe aclarar que el hecho de que sshvpn tenga la posibilidad de levantar un demonio sin ser administrador, no va en desmedro de la seguridad, lo cual será aclarado a medida que se vayan analizando la configuraciones.
+
+\subsection{Aceptando conexiones SSH provenientes del cliente}
+\label{sec:aceptando_ssh}
+
+El protocolo SSH tiene la posibilidad de establecer conexiones entre hosts sin necesidad de introducir contraseñas de modo interactivo, gracias a un sistema de claves que permite al servidor reconocer de forma unívoca al cliente.
+
+En este se deben generar un par de claves asimétricas RSA (véase Sección \ref{sec:generando_claves}), la clave privada permanece en el cliente, y la clave pública la debemos llevar al servidor VPN. Supongamos que nuestra clave pública está en un archivo llamado \emph{id\_rsa\_key\_cliente.pub}.
+
+Ahora debemos permitir las conexiones a través de SSH para el usuario sshvpn, de la siguiente forma:
+
+\begin{listing}[style=consola, numbers=none]
+# cd /home/sshvpn
+# mkdir .ssh/
+# cd .ssh/
+# mv /camino/a/id_rsa_key_cliente.pub .
+# cat id_rsa_key_cliente.pub >> authorized_keys
+\end{listing}
+
+El archivo \emph{/home/sshvpn/.ssh/authorized\_keys} contiene todas las claves públicas de los distintos clientes que están permitidos ingresar al sistema como este usuario. Luego de esto, el cliente podrá ingresar al servidor VPN, sin necesidad de contraseña, únicamente con el comando \emph{ssh el.servidor.com.ar}.
+
+\subsection{Lanzando un nuevo demonio SSH}
+
+Como se ha mencionado anteriormente, no se va a utilizar el mismo puerto para conectar las shells SSH y la VPN. Por lo tanto se ejecutará otro demonio SSH, configurado para que escuche en un puerto específico, y para que solo sean aceptados los que desean establecer una VPN.
+
+Nótese que esta es una de las capas de seguridad. Se esta denegando el acceso por el puerto determinado a los usuarios que no tienen permisos para establecer una conexión VPN.
+
+\emph{sshd} al ejecutarse, lee un archivo de configuración generalmente \texttt{/etc/ssh/sshd\_config}. Como no se pretende modificar las opciones del demonio que escucha por el puerto 22, no se modifica ese archivo. Se Crea un nuevo archivo de configuración y se lo ubica en \texttt{/home/sshvpn/etc/}, con el nombre \texttt{sshppp\_config}, que se muestra en la Configuración \ref{config:sshppp_config}.
+
+\begin{configuracion_small}
+\begin{listing}[style=configuracion_small]
+PidFile /var/run/sshvpn.pid
+Port 9876
+Protocol 2
+
+HostKey /etc/ssh/ssh_host_rsa_key
+HostKey /etc/ssh/ssh_host_dsa_key
+
+#Privilege Separation is turned on for security
+UsePrivilegeSeparation yes
+
+# Lifetime and size of ephemeral version 1 server key
+KeyRegenerationInterval 3600
+ServerKeyBits 768
+
+# Logging
+SyslogFacility AUTH
+LogLevel INFO
+
+# Authentication:
+LoginGraceTime 120
+PermitRootLogin no
+StrictModes yes
+
+RSAAuthentication yes
+PubkeyAuthentication yes
+
+AllowUsers sshvpn
+
+#AuthorizedKeysFile	%h/.ssh/authorized_keys
+IgnoreRhosts yes
+RhostsRSAAuthentication no
+HostbasedAuthentication no
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
+PasswordAuthentication yes
+
+X11Forwarding no
+X11DisplayOffset 10
+PrintMotd no
+PrintLastLog yes
+TCPKeepAlive yes
+
+Subsystem sftp /usr/lib/openssh/sftp-server
+UsePAM yes
+\end{listing}
+\caption{Archivo /home/sshvpn/etc/sshppp\_config.}
+\label{config:sshppp_config}
+\end{configuracion_small}
+
+Lo más importante que se puede destacar de \ref{config:sshppp_config}, son las primeras opciones en la que el archivo PID del demonio será \texttt{/var/run/sshvpn.pid}. El puerto en el que escuchará es el 9876 y el protocolo SSH utilizado es la versión 2.
+
+También es importante notar la opción \emph{AllowUsers sshvpn}. Esto permite que solo pueda ingresar por este puerto el usuario sshvpn, y ningún otro.
+
+Todas las demás opciones son restricciones de seguridad para evitar ingresos no deseados; a estas se las puede encontrar en la página del manual del archivo en \cite{man}.
+
+Para lanzar el demonio, solo basta ejecutar como superusuario el comando: 
+
+\begin{listing}[style=consola, numbers=none]
+# /sbin/sshd -f /home/sshvpn/etc/sshppp_config
+\end{listing}
+
+\section{Configuración del Cliente VPN}
+\label{sec:pppssh_configuracion_cliente}
+
+En esta sección se detallan los pasos necesarios para configurar el extremo cliente de una conexión PPP y SSH. Lo parámetros van desde la creación del usuario único permitido para conectarse con el servidor, hasta la definición de los alias de red, pasando por la generación de claves RSA y una muestra de la conexión realizada. 
+
+\subsection{Creando un nuevo usuario}
+
+En el cliente VPN también se crea un usuario que será el encargado de establecer la conexión VPN con el servidor, y a efectos de simplicidad, este usuario tendrá el mismo nombre que el usuario creado en el servidor.
+
+Antes de crear el usuario, se crea un grupo con el mismo nombre de la siguiente manera:
+
+\begin{listing}[style=consola, numbers=none]
+$ sudo addgroup sshvpn
+$ sudo adduser --home /home/sshvpn --ingroup sshvpn sshvpn
+$ sudo passwd sshvpn
+$
+\end{listing}
+
+Esto es similar a lo que se hace en el servidor (Sección \ref{subsec:crear_user_enserver}). La diferencia es que aquí es necesario acceder al usuario sshvpn, por lo que se omite la opción \texttt{--disable-login} en la creación del usuario.
+
+Con el comando \emph{passwd sshvpn} se establece una contraseña para poder ingresar como usuario \texttt{sshvpn}.
+
+\subsection{Generando las claves RSA}
+\label{sec:generando_claves}
+
+Ahora es necesario generar el par de claves pública/privada en el cliente; guardar la privada y pasar al servidor la clave pública para poder acceder a él sin necesidad de contraseña. Esto se hace de la siguiente forma:
+
+\begin{listing}[style=consola, numbers=none]
+# su - sshvpn
+# mkdir .ssh/
+# cd .ssh/
+# ssh-keygen -t rsa -N ''
+\end{listing}
+
+Primero se debe cambiar al usuario sshvpn (con el comando ``su - sshvpn''); luego en el directorio \texttt{.ssh} se generan las claves con el comando \emph{ssh-keygen}. Los archivos generados son \texttt{id\_rsa} (la clave privada que se guarda en el cliente) e \texttt{id\_rsa.pub} (la clave pública que se envía al servidor, véase Sección \ref{sec:aceptando_ssh}). Para enviarla, se escribe lo siguiente (utilizando \gls{SCP}):
+
+\begin{listing}[style=consola, numbers=none]
+# scp ./id_rsa.pub sshvpn@el.servidor.com.ar:/home/sshvpn/.ssh/id_rsa_key_cliente.pub
+\end{listing}
+
+\subsection{Configuración de sudo}
+
+Como este paso se realiza de la misma manera que en \ref{subsec:conf_sudo_enserver}), solamente se mostrará la línea que se debe agregar con \texttt{visudo}:
+
+\begin{verbatim}
+sshvpn ALL=NOPASSWD: /usr/sbin/pppd
+\end{verbatim}
+
+En el cliente también es necesario que el usuario sshvpn pueda levantar el demonio \texttt{pppd}, para que se pueda establecer las conexión.
+
+\subsection{Conectando al Servidor}
+
+La conexión al servidor se efectúa desde el cliente con una simple línea ejecutada como el nuevo usuario sshvpn que se a creado anteriormente. El comando es el siguiente \footnote{La barra invertida (\textbackslash)en el comando indica corte de línea}:
+
+\begin{verbatim}
+sudo /usr/sbin/pppd updetach noauth pty "sudo -u sshvpn ssh -p 9876 -t -t servidor \
+		sudo /usr/sbin/pppd noauth 192.168.254.1:192.168.254.2"
+\end{verbatim}
+
+Como sshvpn debe ejecutar el demonio \texttt{pppd} a través del comando sudo, se ejecuta dicho demonio con las siguientes opciones:
+
+\begin{itemize}
+	\item \emph{updetach}: Desvincula a pppd de la terminal donde se lo ejecuta, para que pueda seguir usándose dicha terminal.
+	\item \emph{noauth}: Como en este caso la autenticación está a cargo del protocolo SSH, no se necesita autenticar al momento de conectar \texttt{pppd}.
+	\item \emph{pty ``...''}: Ejecuta el comando encerrado entre comillas antes de conectarse.
+\end{itemize}
+
+Luego se ejecuta el pppd local, antes de proceder a conectarse. Debido a que el primer \texttt{pppd} se ejecuta con sudo, el comando ssh dentro de pty ``...'', también se ejecutaría con permisos del usuario raiz, y por lo tanto buscaría el archivo \texttt{authorized\_keys} en el directorio \texttt{.ssh/} del directorio de root. 
+
+Como se requiere que busque el directorio de sshvpn, lo que se hace es ejecutar el ssh como \texttt{sshvpn} mediante el comando: \emph{sudo -u sshvpn}.
+
+A ssh se le pasan los siguientes parámetros:
+
+\begin{itemize}
+	\item \emph{-p 9876}: Especifica el puerto del servidor al que debe intentar conectarse.
+	\item \emph{-t -t}: Obliga al otro extremo alojar en una \texttt{tty} (terminal del sistema) al comando que se ejecuta. Esto es necesario para ejecutar \texttt{pppd}.
+	\item \emph{servidor}: Es el nombre de dominio del servidor al cual se va a conectar.
+	\item \emph{sudo /usr/sbin/pppd noauth 192.168.254.1:192.168.254.2}: Esta línea se ejecuta en el servidor a través de ssh. Lo que hace es levantar el demonio \texttt{pppd} en el servidor, con la opción \emph{noauth}, y otorgándole como parámetros las direcciones IP que utilizarán el cliente y el servidor.
+\end{itemize}
+
+\subsection{Creando un alias para la VPN}
+
+Con el objeto de simplificar un poco las cosas para el cliente, ssh permite crear \emph{aliases} para distintas conexiones; esto es, asociar a un nombre fácil de recordar, un nombre de dominio, puerto, usuario, etcétera.
+
+El archivo que permite esto es \texttt{.ssh/config} del directorio personal de sshvpn, cuyo contenido se muestra en la Configuración \ref{config:aliases_config}.
+
+\begin{configuracion}
+\begin{listing}[style=configuracion]
+# Este archivo se encuentra en ~sshvpn/.ssh/
+#
+# UN ALIAS para la VPN ssh+ppp con el dominio nicolasformoso.com.ar
+Host vpn_sshppp
+Hostname nicolasformoso.com.ar
+User sshvpn
+Port 9876 
+IdentityFile ~/.ssh/id_rsa
+\end{listing}
+\caption{Archivo /home/sshvpn/.ssh/config}
+\label{config:aliases_config}
+\end{configuracion}
+
+A partir de ahora, cuando se escriba \emph{ssh vpn\_sshppp}, se establecerá una conexión SSH con el dominio \emph{nicolasformoso.com.ar}, por el puerto 9876 y con el usuario sshvpn. En este archivo pueden definirse tantos \emph{aliases} como se necesiten, en forma secuencial.
+
+\section{Añadiendo seguridad a la VPN}
+\label{sec:pppssh_seguridad}
+
+En esta sección se mostrarán consejos simples que hacen a la conexión VPN un poco más segura, ya sea restringiendo el acceso al servidor SSH, como limitando el uso de ciertos comandos que no son necesarios para establecer la conexión.
+
+\subsection{Bloqueando la Shell de sshvpn}
+
+Como no se pretende que el usuario sshvpn tenga acceso al servidor a través de una shell, sino que solo pueda establecer la conexión VPN, se agrega antes de la clave pública lo siguiente:
+
+\begin{verbatim}
+command="sudo /usr/sbin/pppd noauth 192.168.254.1:192.168.254.2"
+\end{verbatim}
+
+De esta manera cuando sshvpn intente ingresar por el puerto 9876, lo único que podrá hacer es ejecutar \texttt{pppd}.
+
+Ahora el comando para conectar con la VPN se simplifica, quedando:
+
+\begin{listing}[style=consola, numbers=none]
+$ sudo /usr/sbin/pppd updetach noauth pty "sudo -u sshvpn ssh vpn_sshppp"
+$
+\end{listing}
+
+Donde \texttt{vpn\_sshppp} es el nombre del alias creado para la VPN en cuestión.
+
+\subsection{Restringiendo las claves}
+
+Si se tiene la posibilidad de conocer la dirección IP pública de la red donde se encuentra el cliente VPN, restringir el uso de una clave pública para esa dirección IP anteponiendo a la clave, es una buena opción para evitar el inconveniente del robo de claves.
+
+\begin{verbatim}
+from="dirección ip del cliente"
+\end{verbatim}
+
+\subsection{Otras opciones}
+
+Para que no se pueda ingresar al servidor X, ni utilizar Agent Forwarding, se agrega a la clave:
+
+\begin{verbatim}
+no-X11-forwarding,no-agent-forwarding
+\end{verbatim}
+
+Existen otras opciones que también se pueden agregar en el archivo \texttt{authorized\_keys} que pueden obtenerse de \cite{man}; todas ellas deben ir separadas por una coma entre sí, y por un espacio en blanco de la clave.
+
+Luego que se haya añadido a las opciones del archivo \texttt{authorized\_keys}, se muestra en la Configuración \ref{config:authorized_keys}.
+
+\begin{configuracion_small}
+\begin{listing}[style=configuracion]
+command="sudo /usr/sbin/pppd noauth 192.168.254.1:192.168.254.2",no-X11-forwarding,no-agent-forwarding ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAnpyZ5BiLj5Yb8bW3eLf7CwGR ... yRSvYfiIOdwHk+FFNp0JkStMEg4shVMXQ== sshvpn@notebook
+\end{listing}
+\caption{Archivo /home/sshvpn/.ssh/authorized\_keys}
+\label{config:authorized_keys}
+\end{configuracion_small}
+
+\section{Conclusión}
+\label{sec:pppssh_conclusion}
+
+Para establecer una red privada virtual utilizando el conjunto de protocolos PPP y SSH, se tiene que contar con una configuración muy bien detallada, porque sino se pueden generar agujeros de seguridad que implicarían en accesos no autorizados a la red.
+
+Esta tecnología se la utiliza para la topología red a red de una VPN, y a pesar de que se puede configurar para múltiples clientes, su complejidad puede llegar a ser tan alta que se tendría que buscar alternativas. Por esta razón es que se realizan conexiones punto a punto, en donde un servidor y cliente, cuentan con sus propias redes privadas. La idea es conectar dichas redes utilizando protocolos muy seguros y probados.
+
+La combinación de PPP y SSH permite utilizar los conceptos y archivos de configuración ya conocidos de estos servicios para luego juntarlos y tener una infraestructura de red segura y estable. La dificultad de su configuración y el tener en cuenta los detalles de seguridad en cuanto a las conexiones SSH y el puerto a utilizar, hacen que sea una opción algo complicada de llevar a la práctica.
+
+Pero aún así, con las rutas configuradas y los numerosos archivos involucrados, se puede tener un enlace red a red altamente seguro y en un tiempo razonable si ya se tiene experiencia previa.

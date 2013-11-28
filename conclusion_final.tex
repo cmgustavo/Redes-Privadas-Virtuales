@@ -1,0 +1,51 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   |-------------------------|                        %
+%   |REDES PRIVADAS VIRTUALES |                        %
+%   |                         |                        %
+%   | Proyecto de graduación  |                        %
+%   |_________________________|                        %
+%                                                      %
+%   Autores                                            %
+%   -------                                            %
+%                                                      %
+% * Formoso Requena, Nicolás Federico (CX02-0239-8)    %
+%     nicolasformoso@gmail.com                         %
+% * Cortez, Gustavo Maximiliano (CX01-0801-9)          %
+%     cmgustavo83@gmail.com                            %
+%                                                      %
+%   Tutores                                            %
+%   -------                                            %
+%                                                      %
+% * Ing. Gustavo Vanetta - vanettag@gmail.com          %
+% * Lic. Miguel Bazzano - miguelbazzano@gmail.com      %
+%                                                      %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% ********* Conclusión final  ********** %
+
+\chapter{Conclusión final}
+\label{chap:conclusion}
+
+La información es lo que da vida a una empresa, por tanto, es importante que sea resguardada. Esto implica que deberán tomarse las medidas necesarias para que cuando haya que transmitirla entre sucursales, empleados, etc, no sea expuesta al mundo exterior, ya que si la información corre riesgo, se compromete la vida de la entidad. Por esto, mientras mayor sea el riesgo, mayor será la justificación del gasto en la seguridad de nuestros datos. 
+
+Teniendo en cuenta lo anterior, una empresa grande optará por soluciones como líneas dedicadas, enlaces inalámbricos o MPLS, para el tráfico más crítico; e implementaciones de redes privadas virtuales para el tráfico de menor importancia.
+Ahora si se trata del mismo caso, pero en una empresa mediana o pequeña, que posee menos recursos, probablemente la implementación de VPNs será la óptima.
+
+En materia de redes privadas virtuales no existe la certeza de que utilizar lo más nuevo o lo considerado más ``seguro'', sea la mejor solución para una empresa. Aunque, en principio, la mayoría de los sistemas VPN funcionan de forma similar, en realidad, la diferencia entre ellos es lo suficientemente significativa como para elegir uno sobre otro. Antes de hacer una opción hay que analizar las variables más importantes: cuán delicada es la información que se transmitirá a través de la VPN, disponibilidad necesaria de la conexión, ancho de banda requerido, etc. 
+
+Con respecto a cuán delicados son nuestros datos, no es lo mismo la necesidad que tiene un banco que maneja dinero a través de sus redes, que la que tiene un servidor de juegos online. No tiene sentido pasarse días, semanas o hasta meses configurando (y entendiendo) el protocolo \gls{IPSec} si solo se va a utilizar la red para transferir música o compartir juegos en línea. Algunas alternativas, permiten con poco esfuerzo y pocas horas hombre, obtener una red privada virtual segura, confiable y rápida. 
+
+No obstante, a la hora de implementar una VPN \textendash y como ya vimos\textendash, la primera opción que debemos hacer es: hardware dedicado (cajas negras) o software implementado en un ordenador.
+
+Las empresas dedicadas a ofrecer soluciones para redes como Cisco, 3Com, SSH.com, entre otras, brindan servicios y equipos de muy alto rendimiento, pero de elevado costo en comparación con las alternativas libres. Dichos equipos no tienen \textendash en la mayoría de los casos\textendash\hspace{0.01cm} una configuración flexible, por lo que si la necesidad de conexión de la empresa varía en cuanto a configuración, protocolos, número de conexiones, etc, y el equipo adquirido no brinda soporte para ello, será necesario invertir en otro nuevo. En estos casos se cumple la regla: ``A menor costo, menor flexibilidad, escalabilidad, etc.''.
+
+En cuanto a las soluciones VPN mediante software implementadas en sistemas libres, podemos decir que en materia de seguridad, están muy bien dotadas, ya que cuentan con los más avanzados sistemas de autenticación, encriptación y encapsulación, por lo que en dicho ámbito pueden competir perfectamente con las soluciones comerciales.
+En cuanto a flexibilidad, las soluciones mediante software son las que llevan la delantera; estas brindan la posibilidad de configurar los servidores VPN en todos los aspectos posibles, implementar firewalls exclusivos para el tráfico VPN sin invertir en hardware adicional, y si la red está bien diseñada, la escalabilidad se convierte en algo muy sencillo de llevar a cabo.
+
+Puede decirse que el costo de la implementación de una VPN con sistemas libres es mayor al costo que tiene la implementación con hardware dedicado; esto se debe a que la instalación y configuración del servidor VPN por software, en el peor de los casos se hace desde cero, en cambio un equipo comercial, solo requiere ser conectado y configurado.
+Si bien es cierto que el costo de la implementación de una VPN en sistemas libres es mayor, hay otros parámetros a tener en cuenta que equilibran la situación: la flexibilidad que obtenemos con sistemas libres, no la encontraremos en los equipos comerciales económicos, ni en los de un rango medio; y la segunda, es que comprar un servidor VPN comercial es más caro que comprar un buen ordenador, o mejor aún, que reutilizar el hardware que ya poseemos.
+
+Cuando nuestra opción para las comunicaciones son las redes privadas virtuales, y nuestro tráfico encriptado viajará entre los destinos atravesando Internet, debemos saber que, sea cual fuere nuestra elección (si equipos comerciales, o servidores por software), el rendimiento de las comunicaciones será poco predecible, y dependerá mucho del ancho de banda que hayamos contratado con nuestro ISP.
+Es por esto, que muchas empresas optan por una conexión de salida a Internet para el tráfico normal, y otra exclusiva para las conexiones VPN. Esta es otra de las cuestiones importantes a analizar.
+
+Finalmente se puede concluir que a la hora de elegir una solución VPN no solo se tiene que pensar soluciones comerciales de empresas como Cisco, Lucent, etc, sino también en las alternativas libres. Ya que estas tienen para ofrecernos grandes ventajas: bajo costo, gran flexibilidad (al punto de adaptarse perfectamente a la necesidad real), alto grado de seguridad y escalabilidad en nuestras redes.

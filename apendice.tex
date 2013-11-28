@@ -1,0 +1,678 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   |-------------------------|                        %
+%   |REDES PRIVADAS VIRTUALES |                        %
+%   |                         |                        %
+%   | Proyecto de graduación  |                        %
+%   |_________________________|                        %
+%                                                      %
+%   Autores                                            %
+%   -------                                            %
+%                                                      %
+% * Formoso Requena, Nicolás Federico (CX02-0239-8)    %
+%     nicolasformoso@gmail.com                         %
+% * Cortez, Gustavo Maximiliano (CX01-0801-9)          %
+%     cmgustavo83@gmail.com                            %
+%                                                      %
+%   Tutores                                            %
+%   -------                                            %
+%                                                      %
+% * Ing. Gustavo Vanetta - vanettag@gmail.com          %
+% * Lic. Miguel Bazzano - miguelbazzano@gmail.com      %
+%                                                      %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% ********* Apéndices ********** %
+
+\appendix
+
+%%%%%%%%%%%%%%%%%%%%%%
+% Equipos de prueba  %
+%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Equipos de prueba}
+\label{appendix:equipos_de_prueba}
+
+En este Apéndice se detallan las características de las redes y equipos utilizados para las pruebas durante el desarrollo del proyecto. La intensión del mismo es proveer información de los requisitos mínimos del hardware necesario para obtener resultados similares (o superiores) a los que se han podido llegar.
+
+Además se plantean los esquemas de conexión a nivel general que cada red utiliza para el acceso a Internet, que por su parte, se profundiza en el Capítulo \ref{chap:ConexionAInternet} de la página \pageref{chap:ConexionAInternet}.
+
+\section{Ambiente de trabajo}
+\label{appendix:ambiente_de_trabajo}
+
+Debido a que la naturaleza del proyecto así lo requiere, para las pruebas, se utilizaron dos redes \gls{LAN} distantes. La comunicación entre ellas se realiza a través de la red pública (Internet). Las redes locales se describen más adelante en las secciones \ref{appendix:red_1} y \ref{appendix:red_2} de las páginas \pageref{appendix:red_1} y \pageref{appendix:red_2} respectivamente.
+
+Cada red se conecta a su ISP (Internet Service Provider), el cual provee un entorno de comunicación ideal en cuanto a cantidad de tráfico e información que circula por la misma, de manera que se puede tener un entorno real de comunicación por un medio inseguro entre las dos redes locales. Un esquema simplificado, que muestra la conexión lógica entre las redes, se puede ver en la Figura \ref{fig:enlace_logico}.
+
+\begin{figure}[htb]
+	\centering
+	\includegraphics{imagenes/general/enlace_logico}
+	\caption{Conexión a Internet de ambas redes y el enlace lógico creado por la VPN.}
+	\label{fig:enlace_logico}
+\end{figure}
+
+Ambas redes locales utilizan, para el tráfico de datos, el protocolo de capa dos \gls{Ethernet} y el conjunto de protocolos TCP/IP. Esto hace que no sean necesarias aplicaciones o dispositivos de conversión entre dos o más protocolos, dejando esta tarea para que la realicen los respectivos sistemas operativos.
+
+\section{Red \texttt{casa.lan}}
+\label{appendix:red_1}
+
+Esta subred cuenta con tres hosts interconectados entre sí por un router que posee funciones de switch y WAP (Wireless Access Point).
+
+El rango de direcciones IP que se utiliza es \texttt{192.168.1.0/24}, es decir, de la dirección \texttt{192.168.1.1} a la dirección \texttt{la 192.168.1.254}.
+
+El rango \texttt{192.168.1.1} a \texttt{192.168.1.9} está reservado para direcciones asignadas estáticamente, y el rango \texttt{192.168.1.10} a \texttt{192.168.1.254}, se asigna dinámicamente a hosts clientes por DHCP.
+
+En la tabla \ref{tab:tabla_red1} se resumen las características de hardware de los equipos de la red:
+
+\begin{table}[htb]
+\centering
+\begin{tabular}{l l l l l l}
+	\hline
+	Hostname & Dirección IP & Arquitectura & Memoria & Disco & Sistema Operativo\\
+	\hline
+	Agnus 	 & 192.168.1.2 	& x86 201Mhz  & 128MB & 6GB+20GB & OpenBSD\\
+	Poncho 	 & 192.168.1.3 	& x86 1600Mhz & 256MB & 160GB 	 & WindowsXP\texttrademark\\
+				   &						  &				      &		    &				   & y Ubuntu Server\\
+	Notebook & Dinámica 	  & x86 1800Mhz & 512MB & 120GB 	 & WindowsXP\texttrademark\\
+	\hline
+\end{tabular}
+\caption{Resúmen de las características de los hosts de casa.lan}
+\label{tab:tabla_red1}
+\end{table}
+
+\subsection{Descripción de equipos}
+\label{sec:descrip_red1}
+
+A continuación se describen las características más importantes de los equipos involucrados.
+
+\subsubsection{Modem/Router Aztech DSL600EW}
+
+Este equipo posee 4 puertos Lan (RJ45), 1 puerto Wan (RJ11), WAP (Wireless Access Point). Conecta y permite el tráfico de datos entre los hosts de esta red.
+
+Brinda servicios de DHCP. Y posee funciones de \texttt{bridge} \footnote{Tanto este dispositivo como los demás, poseen otras funcionalidades.}.
+
+Tiene asignada la dirección IP \texttt{192.168.1.1}.
+
+\subsubsection{Hostname: agnus}
+
+Este host establece una conexión pppoe con el ISP, y brinda acceso a internet a la red. Cumple también funciones de servidor DNS, SSH y VPN. A seguir, su descripción detallada:
+
+\begin{tabbing}
+	\hspace*{.4\textwidth} \= \hspace*{\textwidth}\kill    % define los espacios de los tabuladores
+	\textbf{Procesador:} \> Cyrix 6x86MX 201 MHz\\
+	\textbf{Memoria RAM (real):} \> 133787648 (127MB)\\
+	\textbf{Disco Rígido 1:} \> 6105MB \\
+	\textbf{Disco Rígido 2:} \> 19092MB\\
+	\textbf{Sistema Operativo:} \> OpenBSD 4.2\\
+	\\
+	\textbf{Adaptador de Red 1:} \> 3Com 3c905B 100Base-TX\\
+	\textbf{Dirección de Hardware (Mac):} \> 00:50:04:7c:b3:e7\\
+	\textbf{Dirección IP:} \> 192.168.1.2\\
+	\textbf{Máscara de Red:} \> 255.255.255.0\\
+	\\
+	\textbf{Adaptador de Red 2:} \> NE2000 (RTL8019)\\
+	\textbf{Dirección de Hardware (Mac):} \> --\\
+	\textbf{Dirección IP:} \> (no tiene) \\
+	\textbf{Máscara de Red:} \> --\\
+\label{tab:desc_agnus}
+\end{tabbing}
+
+\subsubsection{Hostname: poncho}
+
+Este host funciona solo como cliente. A seguir, su descripción detallada:
+
+\begin{tabbing}
+	\hspace*{.4\textwidth} \= \hspace*{\textwidth}\kill  %define los espacios de las columnas (40% 1ra y el resto 2da)
+	\textbf{Procesador:} \> x86 Family AuthenticAMD ~1599 MHz\\
+	\textbf{Memoria RAM (real):} \> 256 MB\\
+	\textbf{Disco Rígido:} \> 153,38 GB\\
+	\textbf{Sistema Operativo:} \> Microsoft\textregistered\hspace{0.1cm} Windows XP\texttrademark\hspace{0.1cm} Professional\\
+	\\
+	\textbf{Adaptador de Red 1:} \> VIA Rhine II Fast Ethernet Adapter\\
+	\textbf{Dirección de Hardware (Mac):} \> 00:14:2A:E4:21:01\\
+	\textbf{Dirección IP:} \> 192.168.1.3\\
+	\textbf{Máscara de Red:} \> 255.255.255.0\\
+\label{tab:desc_poncho}
+\end{tabbing}
+
+\subsubsection{Hostname: notebook}
+
+Este host funciona solo como cliente. A seguir, su descripción detallada:
+
+\begin{tabbing}
+	\hspace*{.4\textwidth} \= \hspace*{\textwidth}\kill  %define los espacios de las columnas (40% 1ra y el resto 2da)
+	\textbf{Procesador:} \>  x86 Family AuthenticAMD ~1808 MHz\\
+	\textbf{Memoria RAM (real):} \> 512 MB \\
+	\textbf{Disco Rígido:} \> 120 GB\\
+	\textbf{Sistema Operativo:} \> Microsoft\textregistered\hspace{0.1cm} Windows XP\texttrademark\hspace{0.1cm} Professional\\
+	\\
+	\textbf{Adaptador de Red 1:} \> WLAN Broadcom 802.11b/g\\
+	\textbf{Dirección de Hardware (Mac):} \> 00:1A:73:5D:AE:79\\
+	\textbf{Dirección IP:} \> (dinámica)\\
+	\textbf{Máscara de Red:} \> --\\
+\label{tab:desc_notebook}
+\end{tabbing}
+
+\section{Red \texttt{red.lan}}
+\label{appendix:red_2}
+
+Esta red esta compuesta por cuatro computadoras que cumplen diferentes funciones dentro de un entorno hogareño. Las funciones que cumplen son diversas, comenzando por un servidor de acceso a Internet para la red local, y terminando en estaciones de trabajo y ocio familiar.
+
+Las características resumidas de las computadoras con sus respectivos nombres para identificarlas se pueden ver en la Tabla \ref{tab:tabla_red2}. Las características más detalladas se pueden ver en \ref{subsec:descrip_red2}.
+
+\begin{table}[htb]
+\begin{center}
+	\begin{tabular}{l l l l l l}
+		\hline
+		Hostname     & Dirección IP & Arquitectura & Memoria & Disco   & Sistema Operativo            \\
+		\hline
+		superhijitus & 192.168.0.1  & x86 166Mhz   & 95MB    & 4134MB  & OpenBSD                      \\
+		wasa         & 192.168.0.2  & x86 866Mhz   & 256MB   & 40020MB & Ubuntu Server                \\
+		nippur       & Dinámica     & x86 1.9Ghz   & 1024MB  & 488.3GB & Windows Vista\texttrademark  \\
+		supermaquina & Dinámica     & x86 3GHz     & 512MB   & 80GB    & Windows XP\texttrademark     \\
+		\hline
+	\end{tabular}
+\end{center}
+\caption{Resúmen de las características de los hosts de red.lan}
+\label{tab:tabla_red2}
+\end{table}
+
+\subsection{Descripción de equipos}
+\label{subsec:descrip_red2}
+
+A continuación una descripción más detallada de los equipos involucrados.
+
+\subsubsection{Modem/Router ADSL (modo bridge)}
+
+Este equipo realiza la conexión a Internet propiamente dicha mediante un puente entre la LAN y la WAN del proveedor. Marca y modelo del dispositivo es: \emph{Amigo Tainet CA81R}.
+
+\subsubsection{Switch 3COM (8 bocas)}
+
+Este dispositivo permite conectar entre sí a varios clientes de la red y así también compartir el acceso a Internet. A seguir, su descripción detallada:
+
+\subsubsection*{\textit{Hostname: superhijitus}}
+
+\begin{tabbing}
+	\hspace*{.4\textwidth} \= \hspace*{\textwidth}\kill
+	\textbf{Procesador:} \> Intel Pentium (P54C) (GenuineIntel 586-class) 166 MHz\\
+	\textbf{Memoria RAM (real):} \> 100233216 (95MB)\\
+	\textbf{Disco Rígido:} \> 4134MB\\
+	\textbf{Sistema Operativo:} \> OpenBSD 4.3 (GENERIC)\\
+	\\
+	\textbf{Adaptador de Red 1:} \> Realtek 8139\\
+	\textbf{Dirección de Hardware (MAC):} \> 00:08:54:b2:48:b6\\
+	\textbf{Dirección IP:} \> 192.168.0.1\\
+	\textbf{Máscara de Red:} \> 255.255.255.0\\
+	\\
+	\textbf{Adaptador de Red 2:} \> NE2000 (RTL8019)\\
+	\textbf{Dirección de Hardware (MAC):} \> 00:c0:df:ab:2e:f1\\
+	\textbf{Dirección IP:} \> (no tiene)\\
+	\textbf{Máscara de Red:} \> (no tiene)\\
+	\\
+	\textbf{Adaptador de Red 3:} \> NE2000 (RTL8019)\\
+	\textbf{Dirección de Hardware (MAC):} \> 00:c0:df:ab:0b:e9\\
+	\textbf{Dirección IP:} \> (no tiene)\\
+	\textbf{Máscara de Red:} \> (no tiene)\\
+\end{tabbing}
+
+\subsubsection{Hostname: wasa}
+
+Equipo servidor utilizado para proveer de acceso \gls{PPTP}, OpenVPN, entre otros. A seguir, su descripción detallada:
+
+\begin{tabbing}
+	\hspace*{.4\textwidth} \= \hspace*{\textwidth}\kill
+	\textbf{Procesador:} \> Intel Pentium III (866 Mhz)\\
+	\textbf{Memoria RAM (real):} \> 256 MB\\
+	\textbf{Disco Rígido:} \> 40020 MB\\
+	\textbf{Sistema Operativo:} \> Ubuntu 8.04 LTS\\
+	\\
+	\textbf{Adaptador de Red 1:} \> RealTek RTL8139\\
+	\textbf{Dirección de Hardware (Mac):} \> 00:08:54:a4:0a:62\\
+	\textbf{Dirección IP:} \> 192.168.0.2\\
+	\textbf{Máscara de Red:} \> 255.255.255.0\\
+	\\
+	\textbf{Adaptador de Red 1:} \> RealTek RTL8139\\
+	\textbf{Dirección de Hardware (Mac):} \> 00:08:54:a4:0a:6e\\
+	\textbf{Dirección IP:} \> (no tiene)\\
+	\textbf{Máscara de Red:} \> (no tiene)\\
+\end{tabbing}
+
+\subsubsection{Hostname: nippur}
+
+Equipo de escritorio que solo cumple funciones de cliente, salvo cuando se realizan pruebas con \gls{PPTP}. A seguir, su descripción detallada:
+
+\begin{tabbing}
+	\hspace*{.4\textwidth} \= \hspace*{\textwidth}\kill
+	\textbf{Procesador:} \> AMD Athlon(tm) X2 Dual Core BE2300, 1900 Mhz\\
+	\textbf{Memoria RAM (real):} \> 1 GB\\
+	\textbf{Disco Rígido:} \> 500 GB\\
+	\textbf{Sistema Operativo:} \> Microsoft\textregistered\hspace{0.1cm} Windows Vista\texttrademark\hspace{0.1cm} Home Premium\\
+	\\
+	\textbf{Adaptador de Red 1:} \> NVIDIA nForce Networking Controller\\
+	\textbf{Dirección de Hardware (Mac):} \> 00:1E:90:22:26:1C\\
+	\textbf{Dirección IP:} \> (dinámica)\\
+	\textbf{Máscara de Red:} \> (dinámica)\\
+\end{tabbing}
+
+\subsubsection{Hostname: supermaquina}
+
+Servidor que se conecta a Internet y provee del nombre de usuario y contraseña al ISP. Este equipo es el que asigna direcciones IP dinámica a los clientes y permite el acceso a Internet mediante NAT a toda la red local. A seguir, su descripción detallada:
+
+\begin{tabbing}
+	\hspace*{.4\textwidth} \= \hspace*{\textwidth}\kill
+	\textbf{Procesador:} \> Intel Pentium 4 630, 3.0 Ghz\\
+	\textbf{Memoria RAM (real):} \> 512 MB\\
+	\textbf{Disco Rígido:} \> 80 GB\\
+	\textbf{Sistema Operativo:} \> Microsoft\textregistered\hspace{0.1cm} Windows XP\texttrademark\hspace{0.1cm} Professional\\
+	\\
+	\textbf{Adaptador de Red 1:} \> Networking Controller\\
+	\textbf{Dirección de Hardware (Mac):} \> 00:13:8f:48:a2:cf\\
+	\textbf{Dirección IP:} \> (dinámica)\\
+	\textbf{Máscara de Red:} \> (dinámica)\\
+\end{tabbing}
+
+\chapter{Documentación}
+\label{appendix:documentacion}
+
+Para la realización del informe de esta tesis se utilizaron una serie de herramientas que facilitaron la organización, escritura y formato del resultado final del mismo.
+
+La finalidad de utilizar software libre para el procesamiento de la documentación, fue el de tener fácil acceso al código fuente,  permitiendo la visualización desde cualquier editor de texto y además de generar archivos con formato PDF que se ha convertido en  estándar ISO para la impresión en papel y en pantalla de cualquier tipo de documento. Por esta razón se ha utilizado, para el proceso de ``compilación'', el software de composición de documentos profesionales Latex, que permite una terminación más profesional en lo que respecta al formato de la documentación. La Figura \ref{fig:piramide_latex} muestra la pirámide de componentes más importantes de Latex para generar el documento, en el que se destaca como elemento central al repositorio de paquetes adicionales de CTAN\footnote{Comprehensive TeX Archive Network, o Red de Archivos TeX comprensibles}, que permite incluir gran cantidad de funciones adicionales y estándar del lenguaje.
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics{imagenes/general/piramide_latex}
+	\caption{Pirámide uniforme de los componentes principales para generar documentos Latex.}
+	\label{fig:piramide_latex}
+\end{figure}
+
+En las siguientes secciones se describen con más detalles las herramientas utilizadas, que van de los editores de texto a los paquetes de software de Latex y una breve descripción del mismo. Además se hace mención a los métodos de trabajo en equipo mediante el uso del software \gls{Subversion} para el control de versiones de la documentación y en la organización de la estructura básica del informe.
+
+\section{Herramientas de edición}
+\label{appendix:herramientas_de_edicion}
+
+Para la edición de la tesis se han utilizado herramientas de composición de textos que permitieron una salida por pantalla e impresión elegantes y a su vez de carácter profesional y estructurado. El autor principal de generar esta documentación es Latex, que es software libre bajo licencia LPPL, por lo que resulta ideal para el propósito de realizar una tesis de grado.
+
+Las herramientas que más cambiaron durante la investigación fueron los editores de texto, ya que a medida que iban surgiendo las necesidades, se probaban software de diferentes desarrolladores hasta encontrar la conformidad. El siguiente listado muestra los paquetes de software utilizados alguna vez durante el proceso de documentación:
+
+\begin{itemize}
+	\item pdfTeX, Version 3.141592-1.40.4 (MiKTeX 2.7)
+	\item LEd (Latex EDitor)
+	\item TeX Maker 1.7
+	\item TeXnicCenter 1 beta 7.50
+	\item Emacs 22
+\end{itemize}
+
+El primer ítem es el compilador de Latex propiamente dicho, que se encarga de generar directamente la salida en formato PDF, y además toma las imágenes en formatos PNG, JPG, entre otros que no sean vectoriales.
+
+\subsection{Compilador de \LaTeX}
+
+\LaTeX es un lenguaje demarcado para documentos, formado por un gran conjunto de macros de TeX que fueron escritos inicialmente por Leslie Lamport en 1984, con la intención de facilitar el uso del lenguaje de composición tipográfica creado por Donald Knuth. Es muy utilizado para la composición de artículos académicos, tesis y libros técnicos, dado que la calidad tipográfica de los documentos realizados con LaTeX es comparable a la de una editorial científica de primera línea.
+
+Este compilador de documentos se puede utilizar mediante la línea de comandos o a través del mismo software de edición que incorpora los comandos necesarios para generar el archivo DIV, PDF o PS según sea cada caso. La siguiente línea de código muestra la salida al ejecutar ``pdftex'' en una terminal de Windows:
+
+\begin{listing}[style=consola, numbers=none]
+Microsoft Windows [Versión 6.0.6001]
+Copyright (c) 2006 Microsoft Corporation.  Reservados todos los derechos.
+
+C:\Users\Gustavo>pdftex
+This is pdfTeX, Version 3.141592-1.40.4 (MiKTeX 2.7)
+**
+\end{listing}
+
+Luego solicita ingresar el nombre del archivo .tex a compilar. Si no se ingresa ninguno, devuelve mensajes de error.
+
+El uso de esta terminal suele ser muy complicado y difícil de controlar, depurar código, etc. Para esto es más recomendado utilizar el nombre del archivo .tex luego del comando ``pdftex'' o bien dejar este proceso en manos de un IDE específico para documentos Latex.
+
+La filosofía de trabajo de \LaTeX es un tanto diferente a la de los procesadores de texto habituales (conocidos como WYSIWYG, es decir, lo que ves es lo que obtienes); dicha filosofía se basa en comandos como se ha mencionado anteriormente. Este modo de trabajo permite a quien escribe un documento, centrarse exclusivamente en el contenido y sin tener que preocuparse de los detalles del formato de salida.
+
+Por otro lado Latex ofrece independencia del dispositivo (impresora, pantalla, etc.) o del sistema operativo (Windows, MacOS, Unix, Linux, etc.) en el que se haya compuesto el documento, permitiendo además exportar a los formatos:
+
+\begin{itemize}
+	\item Postscript,
+	\item PDF,
+	\item SGML,
+	\item HTML,
+	\item RTF,
+	\item entre otros.
+\end{itemize}
+
+El formato que se ha utilizado para la realización de esta tesis es PDF, ya que es el más extendido de todos y su visualizador oficial de Adobe se puede ejecutar en cualquier plataforma.
+
+\subsection{Edición con TeXnicCenter}
+
+Una de las herramientas que mejor se ha adaptado a la edición, depuración y composición de la documentación fue el software libre \index{TeXnicCenter} versión 1 beta 7.50 (Figura \ref{fig:texniccenter}). Este posee numerosas características que hacen más fácil la escritura y organización de la tesis de grado, tales como:
+
+\begin{itemize}
+	\item Resaltado de sintaxis,
+	\item Barra de herramientas con formatos rápidos,
+	\item Acceso directo a la ecuaciones básicas,
+	\item Teclas de acceso rápido a la compilación y previsualización del documento,
+	\item Botones de navegación por los errores de sintaxis, advertencias y errores de margenes,
+	\item Posibilidad de incluir diccionarios de español para la corrección ortográfica,
+	\item Entre otros.
+\end{itemize}
+
+Una de las características pobres de este editor son los modos de navegación por los capítulos y secciones de la documentación. Y a pesar de que se pueden crear proyectos con estas características, se pierde la independencia en el uso de cualquier editor de texto que mejor se adapte a los gustos y necesidades de cada uno. Por esta razón, no se crean proyectos con ningún editor Latex para evitar introducir archivos propios de cada software.
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics{imagenes/texniccenter}
+	\caption{Interfaz de usuario ligeramente modificada, pero manteniendo su simpleza.}
+	\label{fig:texniccenter}
+\end{figure}
+
+Por otra parte, TeXnicCenter ofrece un alto grado de personalización tanto de la interfaz de usuario como de los programas externos que puedan utilizarse (visor de PDF de Adobe, compilador de Latex propietario, etc). Aunque esta característica puede dar un aspecto de complejidad al programa, después de un tiempo de utilización resulta difícil dejarlo.
+
+\subsection{Edición con TexMaker}
+
+Otra de las herramientas de edición de documentos Latex es TexMaker (Figura \ref{fig:texmaker}), que se caracteriza por la amigable interfaz de usuario, con iconos grandes y colores llamativos. Este software libre hace que la experiencia escribiendo la tesis de grado sea realmente agradable y sin nada que envidiar a los procesadores de textos actuales.
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics{imagenes/texmaker}
+	\caption{TeXMaker y su agradable interfaz de usuario, durante la edición de esta tesis.}
+	\label{fig:texmaker}
+\end{figure}
+
+TeXMaker tiene muchas características interesantes que ayudan a la escritura de documentos Latex, entre ellas se listan a continuación:
+
+\begin{itemize}
+	\item Resaltado de sintaxis,
+	\item Autocompletado de los comandos predefinidos,
+	\item Muestra las referencias del archivo abierto (como un navegador de capítulos, secciones, etc.),
+	\item Entre otros.
+\end{itemize}
+
+\subsection{Edición con LEd}
+
+LEd (de Latex Editor) es un software gratuito que permite la edición de documentos Latex con previsualización incorporada si se esta trabajando con formato DVI. El entorno visual es muy completo y ofrece la mayoría de los botones de acceso directo a las operaciones más utilizadas en la barra de herramientas, como se puede observar en la Figura \ref{fig:led}.
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics{imagenes/led}
+	\caption{Entorno de edición LEd sin la vista previa activada.}
+	\label{fig:led}
+\end{figure}
+
+Las características más destacadas de LEd se listan a continuación:
+
+\begin{itemize}
+	\item Resaltado de sintaxis,
+	\item Autocompletado de los comandos Latex más importantes,
+	\item Previsualización instantánea del documento en DVI,
+	\item Gran cantidad de botones con funciones rápidas para Latex,
+	\item Entre otros.
+\end{itemize}
+
+LEd es software gratuito, pero existe una versión comercial con soporte técnico incluido. Para el propósito de esta tesis, se utiliza la versión gratuita que es más que suficiente.
+
+\subsection{Diagramas con Edraw Max}
+
+Edraw Max es un software comercial que se utiliza para hacer todo tipo de diagramas, que van desde el diseño de viviendas (simples) hasta los diagramas UML, electrónicos y de red, entre varios otros modelos. Además incluye una serie de ejemplos para cada tipo de diagramas, lo que facilita el diseño y muestra un panorama general del potencial del programa.
+
+Las características más destacadas de la versión 4.0 son las siguientes:
+
+\begin{itemize}
+	\item Gran cantidad de modelos predefinidos de alta calidad;
+	\item Interfaz similar a la de Microsoft Office 2007;
+	\item Permite exportar el diagrama a varios formatos, entre ellos PDF y PNG;
+	\item Posibilidad de importar modelos o gráficos;
+	\item Diagramas de ejemplo para todos los casos.
+\end{itemize}
+
+Esta versión de Edraw Max se ha conseguido mediante el sitio web Give Away of the Day\footnote{http://giveawayoftheday.com}, que ofrece diariamente programas comerciales de forma gratuita por un día. Una captura de pantalla se puede ver en la Figura \ref{fig:edrawmax}.
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics{imagenes/edrawmax}
+	\caption{Atractiva interfaz de usuario de Edraw Max 4.0.}
+	\label{fig:edrawmax}
+\end{figure}
+
+\section{Estructura de la documentación}
+\label{appendix:doc_estructura_documentacion}
+
+Para que la realización de esta tesis de grado sea lo más organizada posible, antes de comenzar a pasar las notas, experiencias y pruebas, se detallaron las normas a seguir en cuanto a la estructura de la documentación. De esta manera, se plantearon inicialmente los puntos claves que se iban incluyendo a medida que avanzaba la investigación.
+
+En esta sección se describen en detalles los parámetros de configuración del documento Latex y los motivos de su utilización. Además se incluye el esquema de la tesis y su forma de escritura.
+
+\subsection{Definiendo el esquema}
+
+La estructura de la documentación cuenta con capítulos, secciones y subsecciones que permiten la ubicación rápida de determinadas temáticas que se incluyen como trabajo de esta tesis. Además se utilizan archivos separados para disminuir el tiempo de actualización del contenido, y con las mismas ventajas que ofrece la programación modular.
+
+De esta manera se han separado lógica y físicamente los archivos de cada capítulo de la siguiente manera:
+
+\begin{description}
+	\item[informe.tex] Contiene las definiciones de formato de salida del documento e incluye todos los capítulos.
+	\item[nota\_facultad.tex] Es un documento independiente con la nota que se presenta para la aprobación del proyecto.
+	\item[apendice.tex] Herramientas utilizadas para las pruebas y redacción del informe final.
+	\item[bibliografia.tex] Libros, revistas, sitios web o cualquier otro material al que se haya recurrido durante el aprendizaje del tema y realización de la tesis.
+\end{description}
+
+Un punto importante a destacar es la organización de los capítulos, que se realizan en archivos separados que no están incluidos en el listado anterior, pero se encuentran incluidos en el archivo \emph{informe.tex}.
+
+\subsection{El Preámbulo}
+
+El preámbulo es una sección especial de \LaTeX, donde se definen todas las directivas generales del documento, utilizadas en tiempo de compilación; esta sección está comprendida entre el inicio del archivo principal .tex, y la sentencia \emph{\\begin{document}}. Luego, todo lo que se encuentre entre las siguientes cláusulas, pertenece al documento propiamente dicho.
+
+\begin{verbatim}
+\begin{document}
+...
+\end{document}
+\end{verbatim}
+
+Como Latex se encarga del formato del documento de salida, se ha considerado importante incluir el encabezado principal, con comentarios de cada línea para demostrar lo que hace cada paquete incluido.
+
+\begin{codigo}
+\begin{listing}[style=TeX]
+\documentclass[a4paper,12pt]{report}
+\usepackage[spanish]{babel}
+\usepackage[latin1]{inputenc}
+\usepackage{float}
+\usepackage{latexsym}
+\usepackage{graphicx}
+\usepackage[pdftex=true,colorlinks=true,plainpages=true]{hyperref}
+\usepackage{anysize}
+\usepackage{makeidx}
+\usepackage[nottoc]{tocbibind}
+\usepackage{color}
+\usepackage{listings}
+\usepackage{array}
+\usepackage{alltt}
+\usepackage{fancyhdr}
+\usepackage{glossaries}
+\end{listing}
+\caption{Tipo de documento y paquetes Latex adicionales.}
+\label{codigo:latex1}
+\end{codigo}
+
+La primera línea del Código \ref{codigo:latex1} indica el tipo de documento que en este caso es un ``reporte'', que no es mas que un término medio entre el tipo \emph{artículo} y el tipo \emph{libro}. También se indica el tamaño de la tipografía y el papel utilizado, que en este caso es de tamaño A4 estándar. Las líneas 2 y 3 indican el idioma en que se escribe el documento y además permite la escritura directamente con caracteres acentuados, tildes y demás, sin usar comandos Latex que los reemplacen y dificulten la lectura del código fuente. La línea 4 permite el uso de símbolos, mientras que la línea 5 la inclusión de gráficos en el documento. La línea 6 agrega hipervínculos a las referencias y tablas de contenidos del documento, así también como direcciones Web o de correo electrónico mediante comandos especiales. La línea 7 por su parte, permite modificar los márgenes, que a pesar de ya estar definidos por el tipo de documento. La línea 8 añade soporte para índice alfabético. La línea 9 agrega bibliografía, tablas de contenidos de tablas, imágenes, etc, a la tabla de contenidos principal. Las líneas 10, 11 y 12, permiten incluir color al documento, listas de códigos enumerados (como el Código \ref{codigo:latex1}) y arreglos de varias dimensiones respectivamente. La línea 13 añade una extensión al entorno ``verbatim'' con la posibilidad de truncar las palabras cuando se llegan al final del margen.
+
+Por último, las líneas que incluyen los paquetes \emph{fancyhdr} y \emph{glossaries} permiten incluir, en primer lugar, encabezados complejos y personalizados, en el que se encuentran gráficos, líneas horizontales, número de página, nombre del capítulo, sección, entre otras opciones. El segundo paquete, como su nombre lo indica, permite incluir una sección aparte que se refiera a los términos que requieran una definición concreta y de fácil ubicación en el documento.
+
+Luego de definir el encabezado con los paquetes adicionales de Latex que permiten ampliar y mejorar el resultado final, se procede con la configuración de algunos comandos como el listado enumerado, definición de colores y los entornos flotantes, como aparece en el fragmento de Código \ref{codigo:latex2}.
+
+\begin{codigo}
+\begin{listing}[style=TeX]
+%% Codigos Latex
+\floatstyle{plain}
+\newfloat{codigo}{thb}{lop}
+\floatname{codigo}{Código}
+%% Codigos de configuración
+\floatstyle{ruled}
+\newfloat{configuracion}{thb}{lop}
+\floatname{configuracion}{Configuración}
+%% Cuadros de registros (logs)
+\floatstyle{boxed}
+\newfloat{logs}{thb}{lop}
+\floatname{logs}{Registro}
+\end{listing}
+\caption{Definición de los códigos, configuraciones y registros flotantes.}
+\label{codigo:latex2}
+\end{codigo}
+
+De esta manera se pueden escribir listados de códigos y configuraciones enumerados por líneas para ser referenciados posteriormente. El código con sus respectivos comentarios por línea de la lista personalizada se puede ver en el Código \ref{codigo:lista_personalizada}.
+
+\begin{codigo}
+\begin{listing}[style=TeX]
+\lstset{ %
+language=TeX,		              % Lenguaje utilizado
+basicstyle=\footnotesize,       % Tamaño de las fuentes
+numbers=left,                   % Donde poner los número de línea
+numberstyle=\footnotesize,      % Tamaño de fuentes de los números de línea
+stepnumber=1,                   % Espacio entre cada línea
+numbersep=5pt,                  % Distancia entre el número y el código
+backgroundcolor=\color{white},  % Color de fondo
+showspaces=false,               % Mostrar espacios
+showstringspaces=false,         % Espacio de las líneas
+showtabs=false,                 % Agregar tabulaciones
+frame=single,                   % Recuadro alrededor del código
+tabsize=2,                      % Tabulación por defecto
+captionpos=b,                   % Posición del texto caption
+breaklines=true,                % Fin de línea
+breakatwhitespace=false,        % Fin de línea por espacios en blanco
+escapeinside={\%*}{*}           % Si se quiere agregar comentarios del código.
+%escapeinside={\%*}{*)}         % Si se quiere agregar comentarios del código.
+}
+\end{listing}
+\caption{Configuración de la lista personalizada.}
+\label{codigo:lista_personalizada}
+\end{codigo}
+
+Antes de terminar el preámbulo, se escribe el título, los autores y la fecha que son generados automáticamente con los valores preestablecidos por el tipo de documento.
+
+También se puede agregar un índice alfabético con el comando \emph{makeindex}; con \emph{maketitle} y \emph{tableofcontent} se escriben el título y la tabla de contenido de todo el informe, pero deben estar dentro de las cláusulas de inicio del documento. Además se pueden agregar páginas independientes del documento principal, que quedan sin indexar y en la primera hoja como por ejemplo una carátula o portada.
+
+\section{Control de las versiones}
+\label{appendix:doc_control_versiones}
+
+En esta sección se describen las características que convirtieron Subversion en el sistema más conocido para manejar grandes proyectos de software con cientos de usuarios editando simultáneamente. Así como se detalla la importancia y utilidad que tuvo, usar un software de control de versiones de la documentación durante el desarrollo de esta tesis.
+
+También se explican los pasos de instalación y configuración rápida del repositorio que se ha utilizado al momento de comenzar a escribir el informe de este proyecto.
+
+\subsection{¿Qué es Subversion?}
+
+Subversion es un software libre que permite el control de versiones de archivos, que fue creado principalmente para reemplazar al popular CVS.
+
+Una característica importante de Subversion es que, a diferencia de CVS, los archivos ``versionados'' no tienen cada uno un número de revisión independiente, sino que todo el repositorio tiene un único número de versión que identifica un estado común de todos los archivos del repositorio en cierto punto en la línea de tiempo de edición de los archivos en cuestión.
+
+Las ventajas que se obtuvieron al trabajar con este sistema para la composición de este informe, son las siguientes:
+
+\begin{itemize}
+	\item Como se trata de un trabajo en grupo, la edición modular y controlada a la última versión hace mucho mas fácil la edición y corrección de errores;
+	\item No se dispone del mismo tiempo para editar la documentación, por lo que permite editar por separado siempre con la última versión;
+	\item Permite revisar el historial con comentarios de los cambios efectuados y discutir sobre los mismos;
+	\item Se mantiene la última versión para todos los editores o usuarios que tengan acceso al repositorio.
+\end{itemize}
+
+De esta manera Subversion cumple un rol muy importante en el trabajo en equipo durante la documentación, aunque solo se use una pequeña parte de la potencia que tiene, y se utiliza para grandes proyectos de desarrollo de software.
+
+\subsection{Configuración del servidor}
+
+El servidor de Subversion corre bajo el sistema operativo OpenBSD 4.4 y al momento de escribir este informe, se encuentra disponible la mayor parte del tiempo para acceso remoto protegido por autenticación de usuario. La configuración consta de un solo repositorio de versiones que se utiliza para mantener actualizada esta documentación.
+
+Para la instalación se utiliza el siguiente comando en OpenBSD:
+
+\begin{listing}[style=consola, numbers=none]
+$ sudo pkg_add -v http://openbsd.md5.com.ar/pub/OpenBSD/4.3/packages/i386/subversion-1.4.4.tgz
+...
+$ sudo svnadmin create /var/svn/
+\end{listing}
+
+Luego de la instalación se tiene que crear el repositorio, que en este caso se encuentra en \emph{/var/svn/}, y por último se realiza la importación de lo que sería la primera versión del documento. Pero antes, según \cite{subversion}, se recomienda la creación de tres directorios de trabajo:
+
+\begin{description}
+	\item[branches:] Para armar ramas de la documentación. Versión de Testeo.
+	\item[tags:] Cuando se completa el testeo, se copia de branches aquí.
+	\item[trunk:] Donde se encuentra el informe final.
+\end{description}
+
+De esta manera se puede trabajar con versiones finales y prueba de manera separada, hasta que se las califique como ``estable''; para este propósito, de mantener la documentación lo más actualizada posible (no se trabaja con software), no son necesarios más que el directorio \emph{trunk}; no se utilizan ramas adicionales que la principal y estable.
+
+Para importar por primera vez un proyecto, se procede de la siguiente manera:
+
+\begin{listing}[style=consola, numbers=none]
+$ svn import /tmp/vpn file:///var/svn/vpn -m "Primera version"
+Adding         /tmp/myproject/branches
+Adding         /tmp/myproject/tags
+Adding         /tmp/myproject/trunk
+Adding         /tmp/myproject/trunk/informe.tex
+...
+Committed revision 1.
+$
+\end{listing}
+
+A partir de este momento, los clientes, programadores o usuarios pueden acceder al repositorio y modificar si se tiene los  permisos adecuados. Esta lista usuarios con permisos determinados se controlan en los archivos \emph{authz} y \emph{passwd} dentro del directorio \emph{config} del repositorio principal. Luego solo cuenta editar los archivos y subir las modificaciones con comentarios correspondientes, que se realizan desde el lado cliente como se explica a continuación.
+
+\subsection{Problemas de acceso}
+
+Como Subversion puede trabajar de varias maneras, el primer desafío fue elegir el que mejor se adapte a los requisitos de documentación y trabajo remoto. Para esto se ha elegido que el repositorio trabaje como servidor dedicado y permita tanto las conexiones externas (desde Internet) como las conexiones internas (desde la red local), ya que al usar otros métodos de conexión como \emph{inetd} o via \emph{http} se presentaban problemas para que cualquier usuario remoto al servidor pudiera acceder al repositorio y además el servidor Web de OpenBSD es bastante limitado en cuanto al agregado de módulos de acceso por SVN (llamado WebSVN).
+
+
+Para conseguir que su funcionamiento sea constante, ya que la dirección IP externa, que permite el acceso al repositorio a través de Internet, puede cambiar de un momento a otro dejando al servidor Subversion inaccesible desde el exterior. Una solución a este problema ha sido la creación de un \emph{script} que realizara el monitoreo de la dirección IP actual y en caso de que cambie, reinicie el servidor Subversion con la nueva dirección. El archivo ejecutable se muestra en el detalle~\ref{config:svn_update}.
+
+\begin{configuracion_small}
+\begin{listing}[style=configuracion]
+#!/bin/sh
+# Guardando dirección IP actual en /tmp/ip_address.tmp.
+# $(netstat -rn | grep tun0 | grep ^[0-9] | awk '{print$2}') > /tmp/ip_address.tmp
+
+# Variable $IP_old con la ip anterior.
+IP_old=$(cat /tmp/ip_address.tmp)
+IP=$(netstat -rn | grep tun0 | grep ^[0-9] | awk '{print$2}')
+
+if [ $IP != $IP_old ]; then
+        /usr/bin/pkill svnserve
+        sleep 5
+        /usr/local/bin/svnserve -d --listen-host 192.168.0.1 -r /var/svn/
+        /usr/local/bin/svnserve -d --listen-host $IP -r /var/svn/
+        echo $IP > /tmp/ip_address.tmp
+fi
+\end{listing}
+\caption{Script para actualizacion de IP en SVN server}
+\label{config:svn_update}
+\end{configuracion_small}
+
+Para que el sistema monitoree este cambio de dirección cada cierto tiempo, se agrega una línea al Cron del sistema para que se ejecute cada hora (en el archivo /etc/crontab):
+
+\begin{listing}[style=consola, numbers=none]
+0       *       *       *       *       /root/svn_restart.sh
+\end{listing}
+
+De esta manera se consigue un servidor Subversion dedicado la mayor parte del tiempo online, mientras la conexión a Internet sea estable y sin importar los cambios de dirección IP.
+
+\subsection{Clientes de Subversion}
+
+Existen varios clientes de Subversion que permiten su utilización más sencilla e intuitiva, pero todas ellas cuentan con las mismas operaciones básicas que el sistema por defecto que utiliza la línea de comandos del terminal en la mayoría de los sistemas operativos.
+
+El cliente para línea de comandos por excelencia es el \emph{CollabNet Subversion Client}, disponible en sistemas Linux/Unix al momento de instalar el servidor Subversion o en sistemas Windows mediante la instalación del cliente desde el sitio Web oficial\footnote{http://subversion.tigris.org/}.
+
+Para obtener por primera vez todo el contenido del repositorio de un determinado proyecto, se utiliza el siguiente comando:
+
+\begin{listing}[style=consola, numbers=none]
+# svn checkout svn://servidorsvn/vpn -u usuario
+\end{listing}
+
+Si se ingresa la opción \emph{-u} el sistema solicita la contraseña, pero si no se agrega ningún parámetro, el sistema primero utiliza el usuario local del equipo, y si no concuerda, se pregunta por el usuario y contraseña. Para actualizar a posibles cambios en los repositorios del proyecto en cuestión, se utiliza:
+
+\begin{listing}[style=consola, numbers=none]
+# svn update svn://servidorsvn/vpn
+\end{listing}
+
+De esta manera se trae al sistema local, la versión más resiente del repositorio. Al realizar modificaciones en cualquier archivo que pertenezca al repositorio, se utiliza el siguiente comando para actualizar los cambios:
+
+\begin{listing}[style=consola, numbers=none]
+# svn commit svn://servidorsvn/vpn -m "comentarios"
+\end{listing}
+
+Mientras ningún usuario se encuentre modificando la misma línea de un archivo en particular, Subversion no notificará conflictos. Pero si esto llegase a ocurrir, se pueden recurrir a herramientas de comparación de versiones como ``WinMerge'' para sistemas Windows o el que viene incluido en \emph{TortoiseSVN}.
+
+El cliente de Subversion para Windows más usado y de código abierto es \gls{TortoiseSVN}, que trabaja en conjunto con el explorador de archivos como un submenú contextual. Las características que incluye se encuentran todas juntas en el menú principal, entre ellas:
+
+\begin{itemize}
+	\item Funciones estándar de SVN a un solo clic (commit, update, checkout),
+	\item Explorador del repositorio,
+	\item Estadísticas de las versiones, por autor y por fecha,
+	\item Generación de una gráfica con las revisiones para las distintas ramas de desarrollo.
+\end{itemize}
+
+Para finalizar esta sección, es importante destacar que, el hecho de llevar el control de versiones de lo que se esta desarrollando a lo largo de la tesis, tiene un valor incalculable en cuanto a información estadística y profesional, ya que resume cada paso del trabajo que se ha realizado y muestra el tiempo que se lleva investigando sobre la temática en cuestión.

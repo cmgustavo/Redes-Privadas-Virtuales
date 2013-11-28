@@ -1,0 +1,621 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   |-------------------------|                        %
+%   |REDES PRIVADAS VIRTUALES |                        %
+%   |                         |                        %
+%   | Proyecto de graduación  |                        %
+%   |_________________________|                        %
+%                                                      %
+%   Autores                                            %
+%   -------                                            %
+%                                                      %
+% * Formoso Requena, Nicolás Federico (CX02-0239-8)    %
+%     nicolasformoso@gmail.com                         %
+% * Cortez, Gustavo Maximiliano (CX01-0801-9)          %
+%     cmgustavo83@gmail.com                            %
+%                                                      %
+%   Tutores                                            %
+%   -------                                            %
+%                                                      %
+% * Ing. Gustavo Vanetta - vanettag@gmail.com          %
+% * Lic. Miguel Bazzano - miguelbazzano@gmail.com      %
+%                                                      %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% ********* VPN con OpenVPN ********** %
+
+\chapter{VPN con OpenVPN}
+\label{chap:vpn_con_openvpn}
+
+OpenVPN es una implementación de una VPN de código abierto, utilizado para crear túneles encriptados entre hosts. Se pueden establecer enlaces directos entre los equipos involucrados, a pesar que estén detrás de un firewall, utilizando NAT. Fue inicialmente escrito por James Yonan y publicado bajo licencia GPL.
+
+En este capítulo se introducirá a la tecnología de OpenVPN; se describirán sus fundamentos y características importantes, que hacen de esta, una buena alternativa de \gls{IPSec}, para usuarios móviles. También se realizarán pruebas de comprobación de funcionamiento y de transferencia de archivos.
+
+\section{Introducción}
+\label{sec:openvpn_introduccion}
+
+OpenVPN permite autenticar los pares utilizando claves pre compartidas, certificados o nombre de usuario y contraseña. Un servidor que acepta múltiples clientes, puede autenticar a cada cliente utilizando firmas y certificados autorizados.
+
+OpenVPN incorpora OpenSSL como librería de encriptación. No es compatible con \gls{IPSec} y con ninguna otra solución VPN expuesta en este trabajo. Los paquetes de instalación constan de archivos binarios para la conexión entre el cliente y el servidor.
+
+Según \cite{wikibooks_openvpn} esta solución se ha ideado para simplificar la configuración de VPN dejando atrás los tiempos de soluciones complejas como IPSec.
+
+\subsection{Encriptación y autenticación}
+
+OpenVPN utiliza OpenSSL para proveer de encriptación a los datos. Este paquete realiza todo el trabajo de encriptación y autenticación.
+
+OpenVPN puede utilizar las características de autenticación de \gls{HMAC} para agregar otra capa de seguridad a la conexión. También se puede utilizar aceleración por hardware para mejorar la performance de la encriptación.
+
+Existen tres métodos de autenticación para conectar entre las partes, mediante el uso de claves pre compartidas, con certificados o con nombre de usuario y contraseña.
+
+\subsection{Funcionamiento}
+OpenVPN puede trabajar sobre UDP (lo hace por defecto) o TCP. Multiplexando las comunicaciones sobre un simple puerto TCP o UDP. Puede funcionar a través de servidores proxy y NAT atravesando firewalls.
+
+El método de conexión se realiza via las interfaces TUN/TAP, donde la primera esta basada en túnel IP de capa 3 y la segunda en Ethernet TAP de capa 2. También se pueden utilizar librerías de compresión de datos como \gls{LZO}.
+
+El puerto que utiliza OpenVPN de forma oficial es el 1194. Además el uso de protocolos de red comunes (TCP/UDP) hacen una buena alternativa a IPSec en situaciones donde el ISP bloquee protocolos VPN específicos con la finalidad de suscribir a los clientes a soluciones costosas para beneficio propio.
+
+\subsection{Comparación con IPSec}
+
+El Cuadro \ref{tab:comparacion_openvpn_ipsec} muestra un resúmen comparativo de OpenVPN frente a IPSec.
+
+\begin{table}[htb]
+\begin{center}
+	\begin{tabular}{l l}
+		\hline
+		\textbf{IPSec}                      & \textbf{OpenVPN}                            \\
+		\hline
+		Estandar VPN                        & Aún desconocido y no compatible con IPSec   \\
+		Hardware variado                    & Solo en computadoras                        \\
+		Tecnología conocida y probada       & Tecnología nueva y en crecimiento           \\
+		Modificación compleja de la pila IP & Tecnología sencilla                         \\
+		Requiere modificaciones al kernel   & Interfaces de red y paquetes estandar       \\
+		Permisos de administrador           & Se ejecuta en espacio de usuario            \\
+		Problemas con direcciones dinámicas & Trabaja con servidor DNS dinámicos          \\
+		Varios puertos y protocolos de uso  & Utiliza un solo puerto del firewall         \\
+		\hline
+	\end{tabular}
+\end{center}
+\caption{Comparación entre IPSec y OpenVPN}
+\label{tab:comparacion_openvpn_ipsec}
+\end{table}
+
+El Cuadro \ref{tab:comparacion_openvpn_ipsec} es una comparativa entre OpenVPN e IPSec. La mayor ventaja del primero respecto al segundo, es la facilidad de uso y puesta en marcha.
+
+\subsection{Seguridad en OpenVPN}
+
+Para encriptar datos se usan contraseñas o claves de encriptación. OpenVPN tiene dos modos considerados seguros, uno basado en claves estáticas pre compartidas y otro en SSL/TLS usando certificados y claves RSA.
+
+Cuando ambos lados usan la misma clave para encriptar y desencriptar los datos, se esta usando el mecanismo conocido como ``clave simétrica'' y dicha clave debe ser instalada en todos los equipos que formarán parte en la conexión VPN.
+
+Si bien las claves asimétricas RSA son la opción más segura, las claves estáticas cuentan con la ventaja de ser mucho más simples.
+
+\subsubsection{Encriptación simétrica y claves pre compartidas}
+
+Siempre quien posea la clave puede desencriptar el tráfico de paquetes, por lo que si esta resulta comprometida, el tráfico completo de la organización se vería afectado, ya que identificaría al intruso como un integrante más de la VPN.
+
+Es por ello que los mecanismos que utiliza IPSec cambian las claves cada cierto período de tiempo asociando a las mismas un ``tiempo de vida'', como se ha visto en el Capítulo \ref{chap:vpn_con_ipsec}.
+
+\subsubsection{Encriptación asimétrica con SSL/TLS}
+
+SSL/TLS usa una de las mejores tecnologías de encriptación para asegurar la identidad de los integrantes de la VPN. Cada integrante tiene dos claves, una pública y otra privada.
+
+La pública es distribuida y usada por cualquiera para encriptar los datos que serán enviados a la contraparte quien conoce la clave privada, que es la única que sirve para desencriptar los datos. El par de claves pública y privada, se generan a partir de algoritmos matemáticos que aseguran que solo con la clave privada es posible leer los datos originales.
+
+\subsubsection{Seguridad SSL/TLS}
+
+Las bibliotecas SSL/TLS son parte del sofware \emph{OpenSSL}, que viene instalado por defecto en casi todas las distribuciones de Linux y OpenBSD, e implementan mecanismos de encriptación y autenticación basados en certificados. Los certificados generalmente son emitidos por entidades de reconocida confiabilidad aunque también se pueden emitir unos propios (ver Sección \ref{subsec:ipsec_certificados_x509} para más detalles) y usarlos en la VPN. Con un certificado firmado, el dueño del mismo es capaz de probar su identidad a todos aquellos que confíen en la autoridad certificadora que lo ha emitido.
+
+\subsection{Ventajas y desventajas}
+
+OpenVPN provee seguridad, estabilidad y comprobados mecanismos de encriptación sin tener la complejidad de otras soluciones VPN como IPsec, por ejemplo. Además ofrece \emph{ventajas} que van más allá que cualquier otra solución como se listan a continuación:
+
+\begin{itemize}
+	\item Posibilidad de implementar dos modos básicos en capa 2 o capa 3 con lo que se logran túneles capaces de enviar información en otros procolos no-IP como IPX o broadcast (NETBIOS).
+	\item Protección de los usuarios remotos. Una vez que OpenVPN ha establecido un túnel el firewall de la organización protegerá el equipo remoto aun cuando no es un equipo de la red local. 
+	\item Las conexiones con OpenVPN pueden ser realizadas a través de casi cualquier firewall. Si se posee acceso a Internet y se puede acceder a sitios HTTPS, entonces un túnel OpenVPN debería funcionar sin ningún problema.
+	\item Soporte para proxy. Funciona a través de proxy y puede ser configurado para ejecutar como un servicio TCP o UDP y además como servidor (simplemente esperando conexiones entrantes) o como cliente (iniciando conexiones).
+	\item Solo un puerto en el firewall debe ser abierto para permitir conexiones, dado que desde OpenVPN 2.0 se permiten múltiples conexiones en el mismo puerto TCP o UDP.
+	\item Las interfaces virtuales (tun0, tun1, etc.) permiten la implementación de reglas de firewall muy específicas.
+	\item Todos los conceptos de reglas, restricciones y reenvío pueden ser utilizados con túneles OpenVPN.
+	\item Alta flexibilidad y posibilidades de extensión mediante \emph{scripting}. OpenVPN ofrece numerosos puntos para ejecutar scripts individuales durante su arranque.
+	\item Soporte transparente para IPs dinámicas. Se elimina la necesidad de usar direcciones IP estáticas en ambos lados del túnel.
+	\item Ningún problema con NAT. Tanto los clientes como el servidor pueden estar en la red usando solamente IPs privadas.
+	\item Instalación sencilla en cualquier plataforma. Tanto la instalación como su uso son simples.
+	\item Diseño modular. Se basa en un buen diseño modular con un alto grado de simplicidad tanto en seguridad como en red.
+\end{itemize}
+
+Se puede tomar como una \emph{desventaja} que no es IPSec-compatible siendo que justamente IPSec es el estándar para soluciones VPN. Además existe aún poca gente que conoce cómo usar OpenVPN. No posee interfaz gráfica. Todavía no existen soluciones en caja cerrada, solo se pueden establecer conexiónes entre computadoras, pero ya se están desarrollando soluciones de este tipo, que separan las conexiones VPN de los hosts.
+
+\section{Configuración en Linux}
+\label{sec:openvpn_configuracion_linux}
+
+A pesar de que existe una versión de OpenVPN para sistemas Windows, incluso con una interfaz gráfica que simplifica un poco las cosas, en esta sección se explicarán los pasos para la configuración bajo Linux, ya que son semejantes en cualquier sistema.
+
+Primero se describirán los paquetes de software necesarios la instalación de OpenVPN, para la generación de claves  para el servidor y los clientes. Finalmente se detallarán los archivos de configuración para ambos extremos.
+
+\subsection{Instalación de software}
+
+Para tener todos los componentes necesarios para configurar OpenVPN, se deben instalar los siguientes paquetes de software (algunos sistemas los traen instalados):
+
+\begin{itemize}
+	\item OpenSSL.
+	\item LZO (opcional si se requiere compresión).
+	\item OpenVPN.
+	\item Controlador tun/tap (ya vienen incluidos en el kernel a partir de la versión 2.4.7).
+\end{itemize}
+
+\subsection{Creación de certificados y claves RSA}
+\label{subsec:openvpn_certificados}
+
+Existen dos formas de conseguir seguridad en una VPN con OpenVPN, uno basado en SSL/TLS mediante certificados y claves RSA y otro en mediante claves estáticas pre compartidas.
+
+Se utilizará OpenSSL para contruir los certificados y claves RSA. Además, se creará un certificado raiz propio, por lo que la \gls{SA} será el mismo servidor local. Los pasos para crearlos se resumen en el listado siguiente:
+
+\begin{enumerate}
+	\item Crear un certificado CA con el cual se firmarán y/o revocarán certificados de clientes.
+	\item Crear un certificado y una clave pública para los clientes.
+	\item Firmar ese certificado usando el certificado CA.
+	\item Distribuir la clave y certificados a los clientes.
+	\item Configurar los scripts del servidor y de los clientes.
+\end{enumerate}
+
+Para empezar, OpenVPN cuenta con varias herramientas y scripts que permiten cumplir con los primeros tres pasos, pero antes se deben crear los directorios y copiar los archivos de ejemplo y scripts.
+
+\begin{listing}[style=consola, numbers=none]
+gustavo@wasa:~$ sudo mkdir /etc/openvpn
+gustavo@wasa:~$ sudo mkdir /etc/openvpn/keys
+gustavo@wasa:~$ sudo cd /etc/openvpn/
+gustavo@wasa:/etc/openvpn$ sudo cp /usr/share/doc/openvpn/examples/easy-rsa/2.0/ /etc/openvpn/
+\end{listing}
+
+Luego editar el archivo ``vars'' solo cambiando las opciones siguientes que aparecen en la Configuración \ref{config:openvpn_vars}.
+
+\begin{configuracion}
+\begin{listing}[style=configuracion]
+export KEY_COUNTRY="AR"
+export KEY_PROVINCE="TUCUMAN"
+export KEY_CITY="SMT"
+export KEY_ORG="Proyecto"
+export KEY_EMAIL="gustavo@superhijitus.red.lan"
+\end{listing}
+\caption{Parámetros que deben modificarse en el archivo ``vars''.}
+\label{config:openvpn_vars}
+\end{configuracion}
+
+Luego se debe obtener permiso de superusuario y ejecutar el script (o establecer los permisos adecuados para que el usuario pueda escribir en todo el directorio). Hacemos lo siguiente:
+
+\begin{listing}[style=consola, numbers=none]
+gustavo@wasa:/etc/openvpn$ sudo su
+root@wasa:/etc/openvpn# source ./vars
+NOTE: If you run ./clean-all, I will be doing a rm -rf on /etc/openvpn/keys
+root@wasa:/etc/openvpn# ./clean-all
+root@wasa:/etc/openvpn# exit
+gustavo@wasa:/etc/openvpn$
+\end{listing}
+
+Ahora se intenta crear la clave \emph{Diffie-Hellman} con el script ``build-dh'' lo cual tardará varios minutos:
+
+\begin{listing}[style=consola, numbers=none]
+root@wasa:/etc/openvpn# ./build-dh
+Generating DH parameters, 1024 bit long safe prime, generator 2
+This is going to take a long time
+........................+..................++*++*++*
+root@wasa:/etc/openvpn#
+\end{listing}
+
+Luego se crea el certificado para la CA:
+
+\begin{listing}[style=consola, numbers=none]
+root@wasa:/etc/openvpn# ./build-ca
+Generating a 1024 bit RSA private key
+............................................................++++++
+..........++++++
+writing new private key to 'ca.key'
+-----
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [AR]:
+State or Province Name (full name) [TUCUMAN]:
+Locality Name (eg, city) [SMT]:
+Organization Name (eg, company) [Proyecto]:
+Organizational Unit Name (eg, section) []:
+Common Name (eg, your name or your server's hostname) [Proyecto CA]:
+Email Address [gustavo@superhijitus.red.lan]:
+root@wasa:/etc/openvpn#
+\end{listing}
+
+De esta manera se han creado los siguientes archivos en el directorio ``keys'':
+
+\begin{itemize}
+	\item ca.crt
+	\item ca.key
+	\item dh1024.pem
+\end{itemize}
+
+Para generar el par \emph{Certificado/Clave del servidor}, se utiliza el siguiente comando:
+
+\begin{listing}[style=consola, numbers=none]
+root@wasa:/etc/openvpn# ./build-key-server openvpn-server
+Generating a 1024 bit RSA private key
+....................................++++++
+...++++++
+writing new private key to 'openvpn-server.key'
+-----
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [AR]:
+State or Province Name (full name) [TUCUMAN]:
+Locality Name (eg, city) [SMT]:
+Organization Name (eg, company) [Proyecto]:
+Organizational Unit Name (eg, section) []:
+Common Name (eg, your name or your server's hostname) [openvpn-server]:
+Email Address [gustavo@superhijitus.red.lan]:
+
+Please enter the following 'extra' attributes
+to be sent with your certificate request
+A challenge password []:
+An optional company name []:
+Using configuration from /etc/openvpn/otro/openssl.cnf
+Check that the request matches the signature
+Signature ok
+The Subject's Distinguished Name is as follows
+countryName           :PRINTABLE:'AR'
+stateOrProvinceName   :PRINTABLE:'TUCUMAN'
+localityName          :PRINTABLE:'SMT'
+organizationName      :PRINTABLE:'Proyecto'
+commonName            :PRINTABLE:'openvpn-server'
+emailAddress          :IA5STRING:'gustavo@superhijitus.red.lan'
+Certificate is to be certified until Oct 22 02:34:42 2018 GMT (3650 days)
+Sign the certificate? [y/n]:y
+
+
+1 out of 1 certificate requests certified, commit? [y/n]y
+Write out database with 1 new entries
+Data Base Updated
+root@wasa:/etc/openvpn#
+\end{listing}
+
+El parámetro que importa es el Common Name, dado que el mismo será utilizado en la configuración de los clientes. El script anterior ha creado los siguientes archivos:
+
+\begin{itemize}
+	\item openvpn-server.crt
+	\item openvpn-server.csr
+	\item openvpn-server.key
+\end{itemize}
+
+Ahora se debe crear el par \emph{Certificado/Clave de los clientes}, de la siguiente manera:
+
+\begin{listing}[style=consola, numbers=none]
+root@wasa:/etc/openvpn# ./build-key openvpn-client
+Generating a 1024 bit RSA private key
+.........++++++
+...++++++
+writing new private key to 'openvpn-client.key'
+-----
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [AR]:
+State or Province Name (full name) [TUCUMAN]:
+Locality Name (eg, city) [SMT]:
+Organization Name (eg, company) [Proyecto]:
+Organizational Unit Name (eg, section) []:
+Common Name (eg, your name or your server's hostname) [openvpn-client]:
+Email Address [gustavo@superhijitus.red.lan]:
+
+Please enter the following 'extra' attributes
+to be sent with your certificate request
+A challenge password []:
+An optional company name []:
+Using configuration from /etc/openvpn/otro/openssl.cnf
+Check that the request matches the signature
+Signature ok
+The Subject's Distinguished Name is as follows
+countryName           :PRINTABLE:'AR'
+stateOrProvinceName   :PRINTABLE:'TUCUMAN'
+localityName          :PRINTABLE:'SMT'
+organizationName      :PRINTABLE:'Proyecto'
+commonName            :PRINTABLE:'openvpn-client'
+emailAddress          :IA5STRING:'gustavo@superhijitus.red.lan'
+Certificate is to be certified until Oct 22 03:01:24 2018 GMT (3650 days)
+Sign the certificate? [y/n]:y
+
+
+1 out of 1 certificate requests certified, commit? [y/n]y
+Write out database with 1 new entries
+Data Base Updated
+root@wasa:/etc/openvpn#
+\end{listing}
+
+De esta manera se obtienen los siguientes archivos:
+
+\begin{itemize}
+	\item openvpn-client.crt
+	\item openvpn-client.csr
+	\item openvpn-client.key
+\end{itemize}
+
+Ahora queda determinar qué archivos quedan en el servidor y cuales deben ser enviados a los clientes. En la tabla \ref{tab:openvpn_archivos} se muestran los archivos generados y la ubicación de los mismos.
+
+\begin{table}[htb]
+\begin{center}
+	\begin{tabular}{l l l}
+		\hline
+		\textbf{Archivo}    & \textbf{Descripción}          & \textbf{Ubicación}    \\
+		\hline
+		dh1024.pem          & Parámetros Diffie Hellman     & Servidor              \\
+		ca.crt              & Certificado raíz CA           & Servidor y Clientes   \\
+		ca.key              & Clave raíz CA                 & Solo equipo que firma \\
+		openvpn-server.crt  & Certificado del servidor      & Servidor              \\
+		openvpn-server.key  & Clave del servidor            & Servidor              \\
+		openvpn-client.crt  & Certificado del cliente       & Cliente               \\
+		openvpn-client.key  & Clave del cliente             & Cliente               \\
+		\hline
+	\end{tabular}
+\end{center}
+\caption{Archivos generados y ubicaciones para una conexión con OpenVPN.}
+\label{tab:openvpn_archivos}
+\end{table}
+
+\subsection{Configuración del servidor}
+
+Para realizar la configuración del servidor, se debe crear un archivo llamado ``server.conf'' en el mismo directorio que se ha trabajado para generar las claves, cuyo contenido puede ser el de la Configuración \ref{config:openvpn_servidor}.
+
+\begin{configuracion}
+\begin{listing}[style=configuracion]
+port 1194
+proto udp
+dev tun
+ca keys/ca.crt
+cert keys/openvpn-server.crt
+key keys/openvpn-server.key
+dh keys/dh1024.pem
+server 10.8.0.0 255.255.255.0
+ifconfig-pool-persist ipp.txt
+keepalive 10 120
+comp-lzo
+persist-key
+persist-tun
+verb 3
+\end{listing}
+\caption{Ejemplo de server.conf para OpenVPN.}
+\label{config:openvpn_servidor}
+\end{configuracion}
+
+\subsection{Configuración del cliente}
+\label{subsec:openvpn_configuracion_cliente}
+
+Para la configuración del cliente se utiliza el archivo de configuración ``client.conf'' que se muestra en la Configuración \ref{config:openvpn_cliente}.
+
+\begin{configuracion}
+\begin{listing}[style=configuracion]
+client
+dev tun
+proto udp
+remote 10.8.0.1 1194
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+ca keys/ca.crt
+cert keys/openvpn-client.crt
+key keys/openvpn-client.key
+comp-lzo
+verb 3
+\end{listing}
+\caption{Ejemplo de client.conf para OpenVPN.}
+\label{config:openvpn_cliente}
+\end{configuracion}
+
+\subsection{Directivas del firewall}
+
+Para dejar pasar el tráfico de datos de OpenVPN, se debe habilitar el paso por las nuevas interfaces que se crean al iniciar el servidor y recibir una conexión de algún cliente. En este caso se van a crear interfaces \emph{tunX}, donde X representa el número de la interfaz o nueva conexión de un cliente. Los siguientes comandos permiten que iptables deje circular la información que pase por estas interfaces:
+
+\begin{listing}[style=consola, numbers=none]
+root@wasa:/etc/openvpn# iptables -A INPUT -i tun+ -j ACCEPT
+root@wasa:/etc/openvpn# iptables -A FORWARD -i tun+ -j ACCEPT
+root@wasa:/etc/openvpn# iptables -A OUTPUT -o tun+ -j ACCEPT
+root@wasa:/etc/openvpn# iptables -A FORWARD -o tun+ -j ACCEPT
+\end{listing}
+
+Solo queda iniciar los servicios correspondientes en el servidor y el cliente, para establecer las conexiones. En el servidor ejecutamos \emph{/etc/init.d/openvpn start}, para levantar el demonio.
+
+Supongamos el caso, que tenemos dos clientes, en el servidor deberíamos ver dos túneles parecidos a estos, al ejecutar el comando \emph{ifconfig}:
+
+\begin{listing}[style=consola, numbers=none]
+tun0      Link encap:UNSPEC  HWaddr 00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00
+          inet addr:10.8.0.1  P-t-P:10.8.0.2  Mask:255.255.255.255
+          UP POINTOPOINT RUNNING NOARP MULTICAST  MTU:1500  Metric:1
+          RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:100
+          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+tun1      Link encap:UNSPEC  HWaddr 00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00
+          inet addr:10.8.0.6  P-t-P:10.8.0.5  Mask:255.255.255.255
+          UP POINTOPOINT RUNNING NOARP MULTICAST  MTU:1500  Metric:1
+          RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:100
+          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+\end{listing}
+
+\section{Clientes móviles con Windows}
+\label{sec:openvpn_clientes_windows}
+
+En esta sección se describen algunos detalles de configuración y ejecución. Además se comprueba la comunicación establecida entre un cliente móvil (con el sistema operativo Windows) y el servidor OpenVPN con Linux.
+
+El esquema de conexión para los clientes móviles se muestra en la Figura \ref{fig:openvpn_road_warrior}.
+
+\begin{figure}[htb]
+	\centering
+	\includegraphics{imagenes/openvpn/road_warrior}
+	\caption{Esquema de conexión tipo ``Road warrior'' o clientes móviles.}
+	\label{fig:openvpn_road_warrior}
+\end{figure}
+
+\subsection{Conexión a la red}
+
+Existe una versión compilada para Windows de OpenVPN, tanto el servidor como el cliente. Pero además, se cuenta con una versión con interfaz gráfica que provee al usuario de un ícono de conexión al servidor en el área de notificación, como se muestra en la Figura \ref{fig:openvpn_tray}.
+
+\begin{figure}[htb]
+	\centering
+	\includegraphics{imagenes/openvpn/tray}
+	\caption{En el área de notificación se muestra el icono de conexión a OpenVPN.}
+	\label{fig:openvpn_tray}
+\end{figure}
+
+A través de esta herramienta es posible conectar con la red remota simplemente haciendo clic en ``Conectar''. Luego se muestra la dirección IP asignada, el nombre de la red a la que se conecta (que puede ser configurada por uno mismo) y la fecha y hora que se ha realizado la conexión.
+
+\subsection{Configuración del cliente}
+
+De la misma manera que en la configuración del cliente en la Sección \ref{subsec:openvpn_configuracion_cliente}, cada usuario requiere un mínimo de configuración, que por cierto, se pueden extraer los ejemplos que provee el paquete de instalación.
+
+Los archivos de ejemplo tanto para cliente como para servidor llevan la extensión .ovpn y se los obtiene del directorio ``config-examples''. El contenido del archivo de configuración del cliente puede contener el listado de la Configuración \ref{config:openvpn_config_windows}.
+
+\begin{configuracion}
+\begin{listing}[style=configuracion]
+client
+dev tun
+proto udp
+remote 192.168.0.2 1194
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+ca ca.crt
+cert openvpn-client1.crt
+key openvpn-client1.key
+comp-lzo
+verb 3
+\end{listing}
+\caption{Ejemplo de client.ovpn para OpenVPN en Windows.}
+\label{config:openvpn_config_windows}
+\end{configuracion}
+
+Como se indica en la Configuración \ref{config:openvpn_config_windows}, se utilizan certificados para conectar al servidor, que deben ser generados y distribuidos como en la Sección \ref{subsec:openvpn_certificados}.
+
+Por lo tanto, los archivos que deben copiarse al directorio de configuración son los siguientes:
+
+\begin{itemize}
+	\item ca.crt
+	\item openvpn-client1.key
+	\item openvpn-client1.crt
+\end{itemize}
+
+Luego, al realizar la conexión, el cliente muestra un registro de los pasos que realiza desde el intercambio de claves hasta la asignación de la dirección IP (Registro \ref{logs:openvpn_cliente_windows}).
+
+\begin{logs}
+  \begin{alltt}
+  \scriptsize
+  Wed Oct 29 14:39:33 2008 OpenVPN 2.0.9 Win32-MinGW [SSL] [LZO] built on Oct  1 2006
+	Wed Oct 29 14:39:33 2008 LZO compression initialized
+	Wed Oct 29 14:39:33 2008 Control Channel MTU parms [ L:1542 D:138 EF:38 EB:0 ET:0 EL:0 ]
+	Wed Oct 29 14:39:33 2008 Data Channel MTU parms [ L:1542 D:1450 EF:42 EB:135 ET:0 EL:0 AF:3/1 ]
+	Wed Oct 29 14:39:33 2008 Local Options hash (VER=V4): '41690919'
+	Wed Oct 29 14:39:33 2008 Expected Remote Options hash (VER=V4): '530fdded'
+	Wed Oct 29 14:39:33 2008 UDPv4 link local: [undef]
+	Wed Oct 29 14:39:33 2008 UDPv4 link remote: 190.30.82.251:1194
+	Wed Oct 29 14:39:33 2008 TLS: Initial packet from 190.30.82.251:1194, sid=f0f3ce6e b77f8414
+	Wed Oct 29 14:39:33 2008 VERIFY OK: depth=1,
+	/C=AR/ST=Tucuman/L=SMT/O=Cissu/CN=Cissu_CA/emailAddress=gustavo@superhijitus.red.lan
+	Wed Oct 29 14:39:33 2008 VERIFY OK: depth=0,
+	/C=AR/ST=Tucuman/L=SMT/O=Cissu/CN=Cissu_CA/emailAddress=gustavo@superhijitus.red.lan
+	Wed Oct 29 14:39:34 2008 Data Channel Encrypt: Cipher 'BF-CBC' initialized with 128 bit key
+	Wed Oct 29 14:39:34 2008 Data Channel Encrypt: Using 160 bit message hash 'SHA1' for HMAC authentication
+	Wed Oct 29 14:39:34 2008 Data Channel Decrypt: Cipher 'BF-CBC' initialized with 128 bit key
+	Wed Oct 29 14:39:34 2008 Data Channel Decrypt: Using 160 bit message hash 'SHA1' for HMAC authentication
+	Wed Oct 29 14:39:34 2008 Control Channel: TLSv1, cipher TLSv1/SSLv3 DHE-RSA-AES256-SHA, 1024 bit RSA
+	Wed Oct 29 14:39:34 2008 [Cissu_CA] Peer Connection Initiated with 190.30.82.251:1194
+	Wed Oct 29 14:39:35 2008 SENT CONTROL [Cissu_CA]: 'PUSH_REQUEST' (status=1)
+	Wed Oct 29 14:39:35 2008 PUSH: Received control message: 'PUSH_REPLY,route 192.168.0.0 255.255.255.0,
+	route 192.168.2.1,topology net30,ping 10,ping-restart 120,ifconfig 192.168.2.6 192.168.2.5'
+	...
+	\end{alltt}
+  \caption{Estableciendo la conexión desde el cliente OpenVPN.}
+  \label{logs:openvpn_cliente_windows}
+\end{logs}
+
+Aunque el registro \ref{logs:openvpn_cliente_windows} muestra solo una parte de la salida en la interfaz gráfica del cliente, se puede ver en el listado que se permite compresión de paquetes, luego se realiza el intercambio de claves y finalmente se establecen las direcciones IP y rutas correspondientes.
+
+\subsection{Modificación de rutas}
+
+Para poder hacer pruebas de ``ping'' entre el equipo remoto y el servidor OpenVPN junto a la red local, es necesario establecer las rutas correspondientes en el firewall, es decir en el equipo con OpenBSD.
+
+Para esto se ejecuta el siguiente comando:
+
+\begin{listing}[style=consola, numbers=none]
+$ sudo route add 192.168.2.0/24 192.168.0.2
+$
+\end{listing}
+
+De esta manera se agrega una nueva entrada a la tabla de ruteo que se puede ver a continuación:
+
+\begin{listing}[style=consola, numbers=none]
+$ route show -inet
+Routing tables
+
+Internet:
+Destination        Gateway            Flags    Refs      Use    Mtu  Interface
+default            200.3.60.15        UGS         2   177818      -   tun0
+loopback           localhost          UGRS        0        0  33208   lo0
+localhost          localhost          UH          1       90  33208   lo0
+192.168.0/24       link#1             UC          4        0      -   rl0
+superhijitus       00:08:54:b2:48:b6  UHLc        2     7012      -   lo0
+192.168.0.2        link#1             UHLc        1    15842      -   rl0
+192.168.0.32       00:13:8f:48:a2:cf  UHLc        1     3684      -   rl0
+192.168.0.35       00:1e:90:22:26:1c  UHLc        1    56610      -   rl0
+192.168.1/24       superhijitus       UGS         0       22      -   rl0
+192.168.2/24       192.168.0.2        UGS         0       25      -   rl0
+200.3.60.15        host251.190-30-82. UH          1        0   1492   tun0
+BASE-ADDRESS.MCAST localhost          URS         0        0  33208   lo0
+$
+\end{listing}
+
+En una terminal de Windows también se puede ver que el cliente móvil alcanza la red local a la cual se ha conectado mediante el servidor OpenVPN. En la Figura \ref{fig:openvpn_ipconfig_cliente} se puede ver una captura de pantalla que muestra el comando ``ipconfig'' con la dirección IP asignada (junto a la dirección local), y el comando ``ping'' al firewall con OpenBSD donde se han asignado las rutas.
+
+\begin{figure}[htb]
+	\centering
+	\includegraphics{imagenes/openvpn/ping}
+	\caption{Prueba del alcance del equipo remoto a la nueva red.}
+	\label{fig:openvpn_ipconfig_cliente}
+\end{figure}
+
+Puede verse entonces, que el equipo remoto no solo puede alcanzar al servidor OpenVPN que asigna la dirección a la red 192.168.2.0 sino que también puede acceder a la red 192.168.0.0 mediante un simple ruteo.
+
+Esta normativa de asignar direcciones de red diferentes sirve para distinguir a los usuarios remotos de los usuarios de la red local, pero aún así permitiendo a los primeros, el acceso a todo o parte de la red de la empresa.
+
+\subsection{Pruebas de transferencia}
+
+Para las pruebas de transferencia se ha utilizado el protocolo \gls{SMB}, mediante el montaje de una unidad virtual del servidor con el contenido compartido del equipo remoto. Luego se copia un archivo de música al directorio personal del servidor como se muestra en la Figura \ref{fig:openvpn_transferencia}, en el que se muestra la ubicación de origen, destino y velocidad de transferencia.
+
+\begin{figure}[htb]
+	\centering
+	\includegraphics{imagenes/openvpn/samba_transf}
+	\caption{Transferencia de archivos entre el equipo remoto y el servidor.}
+	\label{fig:openvpn_transferencia}
+\end{figure}
+
+El cliente móvil puede utilizar todos los servicios de la red local como si de un usuario de la misma se tratara.
+
+\section{Conclusión}
+
+OpenVPN es un producto de software diseñado y desarrollado para simplificar los problemas que se tienen con protocolos complejos como IPSec. Esto hace que se convierta en una solución alternativa al estándar, y gracias a que es de código abierto, se encuentra siempre en constante actualización y desarrollo.
+
+Otra ventaja, es que OpenVPN se convirtió en una alternativa a \gls{PPTP}, ya que permite la conexión de usuarios móviles utilizando el software cliente que además esta disponible para cualquier sistema operativo, y salvando los problemas de seguridad de PPTP (Ver más detalles en Sección \ref{sec:pptp_introduccion}).
+
+Finalmente se puede decir que OpenVPN presenta una muy buena alternativa de fácil administración y configuración para establecer conexiones seguras. Aunque no supera la seguridad y robustez que tiene IPSec, la simplicidad de uso ha impulsado que este desarrollo de libre distribución vaya adquiriendo cada vez más adeptos.

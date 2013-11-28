@@ -1,0 +1,186 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   |-------------------------|                        %
+%   |REDES PRIVADAS VIRTUALES |                        %
+%   |                         |                        %
+%   | Proyecto de graduación  |                        %
+%   |_________________________|                        %
+%                                                      %
+%   Autores                                            %
+%   -------                                            %
+%                                                      %
+% * Formoso Requena, Nicolás Federico (CX02-0239-8)    %
+%     nicolasformoso@gmail.com                         %
+% * Cortez, Gustavo Maximiliano (CX01-0801-9)          %
+%     cmgustavo83@gmail.com                            %
+%                                                      %
+%   Tutores                                            %
+%   -------                                            %
+%                                                      %
+% * Ing. Gustavo Vanetta - vanettag@gmail.com          %
+% * Lic. Miguel Bazzano - miguelbazzano@gmail.com      %
+%                                                      %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% ********* Realización del proyecto ********** %
+
+\chapter{Realización del proyecto}
+\label{chap:RealizacionDelProyecto}
+
+En este capítulo se describen los objetivos y los pasos a seguir durante la investigación, documentación y evaluación de las diferentes soluciones VPN.
+
+Además se especifica el alcance del proyecto, tanto en la práctica como en los fundamentos teóricos que se van a incluir.
+
+\section{Objetivos}
+\label{sec:realizacion_objetivos}
+
+Los objetivos planteados para la tesis de investigación e implementación \textsc{Redes Privadas Virtuales} son los siguientes:
+
+\begin{itemize}
+	\item Definir una VPN (Virtual Private Network, o Red Privada Virtual en castellano), los tipos de conexiones y aplicaciones en la vida real.
+	\item Presentar soluciones para la interconexión segura de computadoras y/o redes de computadoras, teniendo en cuenta el equilibrio entre los costos y beneficios en contraste a las alternativas comerciales.
+
+	\item Detallar los métodos actuales de conexión a Internet para empresas que pretendan tener su portal comercial siempre disponible en línea, junto a otros servicios dentro de la red local.
+
+	\item Redactar los aspectos teóricos y prácticos de las configuraciones VPN para concretar una transferencia de información segura, rápida, privada y de confianza.
+
+	\item Tener en cuenta que el diseño e implementación de las soluciones sean acordes a los estándares más utilizados en la actualidad, de manera que permitan el fácil crecimiento de la infraestructura y así también el mantenimiento de las redes.
+
+	\item Requerir que el modo de conexión sea transparente al sistema operativo de las terminales de usuarios, por más que los servidores trabajen con sistemas diferentes.
+\end{itemize}
+
+\subsection{Especificaciones}
+
+Se estudian las diversas topologías de comunicación utilizando técnicas de VPN, que permiten el tráfico de información asegurada y garantizada entre redes, terminales de usuarios o ambos entre sí. Para esto se utilizan herramientas de software libre como OpenVPN, \gls{ISAKMP}, PoPtoP, entre otros, que permiten la comunicación entre dos puntos remotos utilizando la misma infraestructura de Internet bajo protocolos como \gls{IPSec}, \gls{PPTP}, etc. Además las pruebas desde el lado del usuario consisten en la utilización de sistemas operativos propietarios y libres, por lo que se tiene en cuenta el soporte de varios servicios VPN, para evitar el cambio de parámetros o configuraciones en el momento de conectarse con un sistema operativo y luego con otro.
+
+La conexión a Internet se realiza de tal manera que permita facilidad en el registro de conexiones, recursos y hasta en posibles problemas de seguridad. Para esto se utilizan Modem ADSL que se conectan al proveedor y a su vez el servidor \gls{OpenBSD} que provee acceso a los clientes de la red local. Este servidor se encarga de establecer la conexión propiamente dicha a Internet, de configurar los parámetros de seguridad y de ofrecer servicios adicionales como correo electrónico con SendMail, DNS con Bind, DHCP con DHCP Server, Firewall con PF, repositorio de control de versiones con Subversion, terminal remota con OpenSSH, entre otros servicios. Por otro lado, para obtener un dominio fijo con direcciones IP dinámicas se utilizan servicios como ZoneEdit, para automatizar los cambios de direcciones IP del proveedor manteniendo el nombre de dominio fijo y así no se pierdan los enlaces VPN que dependen del dominio.
+
+Finalmente se analiza el costo de implementación en los servidores, que en cuanto a licencias de software se refiere, se tiene un gasto nulo; esto representa una gran ventaja si se lo compara con soluciones comerciales, las cuales van de los cientos a los miles de dólares (en hardware, software y soportes técnico). Por otro lado, al utilizar una VPN bajo la infraestructura de Internet, no se invierte dinero en líneas dedicadas, cuya instalación y mantenimiento representa un gasto imposible de afrontar para muchas empresas e instituciones. La investigación de las soluciones con software libre, van desde la instalación del sistema operativo servidor hasta las pruebas de velocidad, seguridad y estabilidad de la red, pasando por la configuración de conexión de banda ancha, configuración del Firewall y de las aplicaciones extras que se utilizan durante el proceso de autenticación entre los sistemas remotos.
+
+\subsection{Conceptos involucrados}
+
+Las materias relacionadas con el tema de esta tesis se podrían resumir de la siguiente manera:
+
+\begin{itemize}
+	\item Redes de Área Local
+	\item Redes de Área Extendida
+	\item Protocolo de Comunicación TCP/IP 
+	\item Sistemas Operativos 
+	\item Seguridad y encriptación
+\end{itemize}
+
+\section{Proceso de desarrollo}
+\label{sec:proceso_de_desarrollo}
+
+La Figura \ref{fig:proceso_desarrollo} muestra de forma generalizada el proceso que se lleva a cabo para la realización de esta tesis. Para comenzar, se hicieron propuestas de los temas que se podían incluir e investigar. Luego se evaluaban si se podían realizar y finalmente quedaban como propuestas válidas para incluirlas en el proyecto.
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics{imagenes/general/proceso_desarrollo}
+	\caption{Diagrama del proceso de desarrollo de la tesis.}
+	\label{fig:proceso_desarrollo}
+\end{figure}
+
+El siguiente paso es la puesta en práctica de la propuesta, en la que se tiene en cuenta la posibilidad de escalabilidad de la solución y además se mide el rendimiento para comprobar si es aceptable o no para determinados fines.
+
+Finalmente se documentan todos los detalles de las pruebas realizadas, teniendo en cuenta la redacción utilizada para referirse al lector. Para la presentación del informe se utiliza el formato estándar PDF junto a las fuentes LaTeX del mismo.
+
+\subsection{Alcance del proyecto}
+
+El alcance del proyecto se define de acuerdo a las necesidades que surgen y a medida que se va avanzando en el tema. De esta manera, se comienza con casos sencillos, evaluando el rendimiento y la máxima utilidad posible en ámbitos empresariales, pasando por esquemas alternativos de conexión y terminando por esquemas tan complejos como seguros y óptimos para entornos de gran cantidad de conexiones simultáneas\footnote{Debido a las limitaciones económicas, no es posible recrear un ambiente real para llevar al límite la investigación, por esta razón se ha hecho de experiencias ajenas para validar los resultados.}.
+
+Además se tienen en cuenta aspectos como la configuración de la conexión a Internet de las redes locales, que más tarde establecen un enlace VPN entre las mismas simulando una gran red separadas por la nube de Internet.
+
+\subsection{Limitaciones técnicas}
+
+Para no entrar en demasiados detalles de los protocolo utilizados (dado que alguno de ellos puede llegar a ser tan complejo como el mismo \gls{IPSec}), se realizan breves descripciones de los mismos, tales como su origen, funcionamiento, ventajas y desventajas, entre otros fundamentos. No se describen detalles como los elementos de las tramas (números de bits) o el trabajo que se realiza a bajo nivel (o nivel del kernel), sino que se rescatan los puntos importantes que pueden ser manejados por el administrador de la VPN o de la red en el espacio de usuario.
+
+Otra limitación del proyecto, que se encuentra fuera del alcance técnico propio, es el ancho de banda de la conexión a Internet (establecida por el proveedor de acceso o ISP en el momento de adquirir el servicio)\footnote{En este caso, se cuenta con 1 Mbps para bajada de datos y 256 Kbps para la subida.}. Además, las pruebas que se realizan, generalmente son efectuadas en rangos horarios de bajo tráfico de datos, que pueden ser en horarios matutinos o diurnos.
+
+En cuanto a las pruebas realizadas, las limitaciones se basan en la cantidad de servicios que puedan ser instalados en los sistemas y probados por ambos extremos de la VPN, tales como sistemas de voz sobre IP (utilizando Asterisk), servicios de música o radio en vivo (Icecast), servicios Web para todas las redes conectadas a la VPN, entre otros. Otra limitación es la dificultad que presentan algunos servicios para su configuración y puesta en marcha, ya sea porque no estan totalmente adaptados para funcionar en determinado sistemas o porque requieren de un alto nivel de conocimientos, que en definitiva, alejarían al objetivo de este proyecto.
+
+\subsection{Limitaciones económicas}
+
+Algunos problemas que surgieron durante la configuración de la conexión a Internet estaban más relacionados con la calidad de los dispositivos utilizados, o que no cumplen con lo especificado por el fabricante, como el caso del modem Aztech DSL600EW (Apéndice \ref{sec:descrip_red1}). Esto se debe al reducido costo de los materiales que se utilizan, produciendo un producto de baja calidad.
+
+El uso de dispositivos dedicados (cajas negras) para establecer redes privadas virtuales, tiene un costo elevado y es justificable en entornos empresariales con gran cantidad de usuarios y conexiones.
+
+El límite económico se refiere a la dificultad en adquirir tanto hardware como software pre configurados para establecer una VPN con la mínima intervención del administrador. Se consideran también los equipos servidores y terminales que se pueden utilizar para simular conexiones múltiples, y todo lo que hace a la infraestructura de conexión a Internet en el hogar, como la implementación en máquinas virtuales antes de su instalación en equipos reales.
+
+\section{Entornos de evaluación}
+\label{sec:realizacion_entornos}
+
+Los escenarios en que se realizaron las pruebas y evaluaciones no constituyen un ambiente empresarial, sino que se tratan de hogares de familia en los que se disponen generalmente de equipos modestos, no de supercomputadoras ni grandes servidores, sino simplemente equipos que se pueden adquirir por precios muy bajos. Los equipos utilizados se describen con más detalles en el Apéndice \ref{appendix:equipos_de_prueba}.
+
+En esta sección se van a tratar los sistemas operativos utilizados para las conexiones y pruebas, además de otras herramientas de software que permite comprobar y registrar las comunicaciones establecidas.
+
+\subsection{Sistemas BSD}
+
+La elección de OpenBSD como sistema principal para proveer acceso a Internet no se basa en un análisis riguroso de costo y rendimiento, sino más bien en la posibilidad de utilizar un sistema gratuito, robusto y que puede ejecutarse en equipos antiguos.
+
+Existen muchas variantes de sistemas BSD, cada una orientada a determinado tipo de usuarios y funcionalidades. Por ejemplo FreeBSD esta más orientado a usuarios de escritorio como intenta ser cualquier distribución de Linux.
+
+En las siguientes secciones se describirán brevemente cada uno de estos sistemas, con el fin de concluir el motivo de la elección de OpenBSD como servidor de Internet.
+
+\subsubsection{FreeBSD}
+
+La idea de FreeBSD es producir un sistema operativo utilizable para cualquier propósito, como Ubuntu, Tuquito, Fedora, SuSE, es decir, un sistema de propósitos generales. Se intenta que sea fácil de usar y contenga una gran cantidad de paquetes (programas) para instalar.
+
+\subsubsection{OpenBSD}
+
+OpenBSD esta orientado a la seguridad más que nada. Las políticas de seguridad son muy estrictas en el desarrollo, ya que cada código que incluyen son auditados exaustivamente para corregir la mayor cantidad de bugs\footnote{Se le llaman bugs a los errores que se encuentran en sistemas de software, cuando se realiza una determinada operación.} posibles.
+
+\subsubsection{NetBSD}
+
+NetBSD esta diseñado como sistema operativo que puede ser distribuido gratuitamente a profesionales, entusiastas e investigadores, para que lo usen como quieran. El objetivo principal de este sistema es la portabilidad a través de la mayor cantidad de equipos, tanto de 32 como de 64 bits. También acentúan la buena escritura del código, la estabilidad y eficiencia del sistema.
+
+\subsection{Características de OpenBSD}
+
+El proyecto OpenBSD es un sistema operativo libre tipo Unix, multiplataforma, basado en 4.4BSD. Los esfuerzos de desarrollo se concentran en la portabilidad, cumplimiento de normas y regulaciones, corrección del código, seguridad proactiva y criptografía integrada.
+
+A continuación se exponen algunas razones por las que OpenBSD es un sistema operativo de gran utilidad para la realización de este proyecto:
+
+\begin{itemize}
+	\item Es reconocido por profesionales de la seguridad informática como el sistema operativo tipo UNIX más seguro; esto es el resultado de una intensa e interminable auditoría de seguridad sobre el código fuente.
+	\item Es un sistema operativo con todas las funcionalidades de UNIX que se puede adquirir de forma gratuita.
+	\item Integra las últimas tecnologías en seguridad para la implementación de cortafuegos (filtros de IP) y redes privadas virtuales (VPN) dentro de un entorno distribuido.
+\end{itemize}
+
+Estas son las características filosóficas del sistemas; las características prácticas se dejaron de lado porque en el transcurso de esta tesis se van a describir detalladamente los puntos sólidos del sistema. 
+
+\subsection{Recomendaciones de instalación}
+
+Las recomendaciones para una instalación limpia e inteligente se pueden enumerar a continuación:
+
+\begin{itemize}
+	\item Bajar siempre la última versión e instalarla en un disco vacío.
+	\item Realizar un particionado inteligente, aprovechando el espacio en disco y asegurando la raiz, evitando que usuarios malintencionados copen la unidad completa.
+	\item Si se va a instalar un servidor, evitar compartir el sistema con otro sistema operativo
+	\item Si se usa como servidor, no instalar el entorno gráfico y mucho menos los grandes paquetes de KDE o Gnome
+	\item Si se van a realizar pruebas, primero se debe intentarlo con una máquina virtual
+\end{itemize}
+
+\subsection{Sistemas Linux}
+
+Linux es un sistema operativo multitarea, multiusuario, multiplataforma y multiprocesador, desarrollado inicialmente por Linus Torvalds en el año 1991, y actualmente mantenido por una gran comunidad de usuarios y programadores.
+
+Como la correcta definición y descripción de este sistema operativo no es el cometido de esta tesis, solamente se va a indicar que Linux en sí, se refiere al \gls{kernel} o núcleo del sistema que es el que se encarga de la intercomunicación entre el hardware del equipo y los programas de usuarios. Pero para que Linux sea un sistema operativo completo (con las herramientas necesarias para su administración) se debe hacer uso de muchas aplicaciones que permitan su administración y uso. Por esta razón, ha habido una controversia en el nombre de solo Linux, y la inclusión de GNU/Linux para referenciar a todo el sistema operativo. Aquí se va a hacer referencia a Linux como si fuera todo el sistema operativo, pero si se requiere indicar otros componentes de \gls{GNU}, se harán mención explícitamente.
+
+En cuanto a las distribuciones de Linux, hay una gran cantidad para casi todos los propósitos específicos y de propósito general. Las más conocidas son Fedora, OpenSuSE, Ubuntu, Debian, Gentoo, entre otras.
+
+Las empresas que trabajan con software libre idearon un modelo de negocios totalmente diferente al que se conocía hasta el momento, y es el de los servicios. En algunos casos, el producto se vende a un precio determinado (como RedHat o SuSE), mientras que en otros casos, las ganancias para las empresas radican en los servicios post venta (o post distribución).
+
+Para la realización de esta tesis se han utilizado distribuciones armadas de Linux, como Ubuntu Server, que es una versión orientada a servidores desarrollada por la empresa Canonical	Ltd., que encabeza el desarrollo de una de las distribuciones más utilizadas por su simplicidad y facilidad de uso.
+
+Ubuntu Server en comparación con la versión de escritorio del mismo fabricante, se caracteriza por la falta de entorno gráfico, la optimización del sistema, la seguridad en los servicios, entre otros aspectos. Esto es principalmente, porque en un equipo servidor no es necesario un entorno gráfico, ni el uso de procesos que hacen buena la experiencia del usuario, pero son totalmente inútiles en servidores.
+
+El sistema viene con configuraciones predeterminadas y servicios adicionales con la posibilidad de agregarlos durante la instalación del sistema. Por ejemplo, los servicios que pueden agregarse en la instalación son OpenSSH, para permitir el acceso remoto por \gls{SSH}, servidor Web, Samba (servidor de archivos), correo electrónico (con TLS), entre otros.
+
+La utilización de Linux ``Ubuntu Server'' como servidor VPN, es más por cuestiones prácticas que técnicas, ya que hoy en día casi cualquier distribución de Linux cuenta con las mismas características y posibilidades de expansión. Vale aclarar que algunas distribuciones vienen mejor preparadas que otras para utilizarlas en servidores.
+
+En particular, Ubuntu Server ha sido modificado para que funcione como servidor, consumiendo pocos recursos (solamente los necesarios), optimizando la seguridad del sistema y servicios como DNS, correo electrónico, SSH, Samba, etc.
+
+\subsection{Sistemas Windows}
+
+El sistema operativo Windows es la denominación de una familia de productos desarrollados por Microsoft tanto para uso de escritorio como para servidores. La primera versión fue liberada en el año 1985 y a partir de entonces se realizaron gran cantidad de modificaciones en el núcleo y otros componentes como las implementaciones y soporte a dispositivos de red, impresoras, entre otros periféricos.
+
+En la realización de esta tesis, se han utilizado dos versiones de Windows, XP y Vista. Ambas solo cumplían el papel de entornos de escritorio y en algunos casos se han utilizado las herramientas que vienen incluidas como el registro del sistema, la configuración de conexiones entrantes y salientes, los comandos de ruteo y estadísticas de la conexión.

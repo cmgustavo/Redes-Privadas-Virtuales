@@ -1,0 +1,304 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   |-------------------------|                        %
+%   |REDES PRIVADAS VIRTUALES |                        %
+%   |                         |                        %
+%   | Proyecto de graduación  |                        %
+%   |_________________________|                        %
+%                                                      %
+%   Autores                                            %
+%   -------                                            %
+%                                                      %
+% * Formoso Requena, Nicolás Federico (CX02-0239-8)    %
+%     nicolasformoso@gmail.com                         %
+% * Cortez, Gustavo Maximiliano (CX01-0801-9)          %
+%     cmgustavo83@gmail.com                            %
+%                                                      %
+%   Tutores                                            %
+%   -------                                            %
+%                                                      %
+% * Ing. Gustavo Vanetta - vanettag@gmail.com          %
+% * Lic. Miguel Bazzano - miguelbazzano@gmail.com      %
+%                                                      %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% ********* Glosario ********** %
+
+%% Formato general
+%\newglossaryentry{<label>}{<key-val list>} 
+
+%% Ejemplo
+%\newglossaryentry{set}% the label
+%{name=set,            % the term
+% description={a collection of objects} % a brief description
+%}
+
+\newglossaryentry{VPN}
+{name=VPN,
+ description={Virtual Private Network, que en castellano se traduce a Red Privada Virtual o RPV, que se refiere a la conexión de redes locales en una sola gran red a través de un canal seguro y fiable, atravezando un medio hostil como Internet.}
+ }
+ 
+\newglossaryentry{Subversion}
+{name=Subversion,
+ description={Sistema de control de versiones para el desarrollo colectivo de software o documentación.}
+ }
+ 
+\newglossaryentry{TortoiseSVN}
+{name=TortoriseSVN,
+ description={Cliente Subversion para Windows que se agrega al menú contextual del sistema cuando se trabaja con el explorador.}
+ }
+ 
+\newglossaryentry{Ethernet}
+{name=Ethernet,
+ description={Especificación de red de área local (LAN) desarrollada en 1976 por Xerox, en cooperación con DEC e Intel, originalmente para conectar los miniordenadores del Palo Alto Research Center (EEUU).}
+ }
+ 
+\newglossaryentry{IPSec}
+{name=IPSec (Internet Protocol Security),
+ description={Es la abreviación de IP Security (seguridad IP), que es un conjunto de protocolos diseñados para asegurar el tráfico sobre el protocolo IP.}
+ }
+ 
+\newglossaryentry{AH}
+{name=AH (Authentication Header),
+ description={Parte del conjunto de protocolos de IPSec que ofrece servicios de autenticación de los paquetes IP.}
+ }
+ 
+\newglossaryentry{DNS}
+{name=DNS (Domain Name Services),
+ description={Abreviación de Domain Name Service, que permite la resolución de nombres fácil de recordar en direcciones IP.}
+ }
+ 
+\newglossaryentry{OpenBSD}
+{name=OpenBSD,
+ description={Sistema Operativo (monolítico) tipo Unix basado en el sistema 4.4BSD proveniente de NetBSD a raiz de discuciones filosóficas.}
+ }
+ 
+\newglossaryentry{VNC}
+{name=VNC (Virtual Network Computing),
+ description={Es un sistema de visualización y control de escritorio remoto desarrollado por AT\&T, que actualmente hasta permite la transferencia de archivos.}
+ }
+ 
+\newglossaryentry{ESP}
+{name=ESP (Encapsulating Security Payload),
+ description={Parte del conjunto de protocolos IPSec que permite el encapsulado de información útil, obteniendo servicios como confidencialidad y autenticación de paquetes IP.}
+ }
+ 
+\newglossaryentry{IPv4}
+{name=IPv4 (Internet Protocol versión 4),
+ description={Versión 4 del protocolo IP que se utiliza en Internet y permitió el crecimiento del mismo. Este protocolo utiliza direcciones de 32 bits, asignadas a cada equipo conectado. Además se tienen direcciones específicas para uso en redes de area local.}
+ }
+ 
+\newglossaryentry{IPv6}
+{name=IPv6 (Internet Protocol versión 6),
+ description={Es la nueva versión del protocolo IP, que entre otras mejoras, utiliza direcciones de 128 bits permitiendo mayor cantidad de conexiones simultáneas. Además en IPv6 se tiene IPSec como tecnología obligatoria.}
+ }
+ 
+\newglossaryentry{LAN}
+{name=LAN (Local Area Network),
+ description={Es la tecnología usada en redes internas que permiten comunicar múltiples sistemas a un medio compartido. Entre sus características se pueden destacar el ancho de banda total elevado, bajo retardo de transmisión, baja tasa de error y además se trata de una red de propiedad privada.}
+ }
+ 
+\newglossaryentry{IPCOMP}
+{name=IPCOMP (IP Payload Compression Protocol),
+ description={Es un protocolo de compresión de bajo nivel para datagramas IP definido en la RFC 3173. Se utiliza para reducir el tamaño de datos transmitidos y ahorrar ancho de banda o mejorar conexiones de baja velocidad.}
+ }
+ 
+\newglossaryentry{SPD}
+{name=SPD (Security Policy Database),
+ description={Es una base de datos con normativas de seguridad que utiliza IPSec para comprobar qué hacer con paquetes IP salientes.}
+ }
+ 
+ \newglossaryentry{SA}
+{name=SA (Security Association),
+ description={La asociación de seguridad determina qué parámetros específicos utilizar para proteger los paquetes. Se pueden configurar de forma manual o automática (mediante IKE), siendo esta última la mejor opción cuando se tiene una red muy grande.}
+ }
+ 
+\newglossaryentry{SPI}
+{name=SPI (Security Parameters Index),
+ description={Índice de parámetros de seguridad es solo un número de 32 bits que se uiliza de índice en la recepción de paquetes IP mediante IPSec.}
+ }
+ 
+\newglossaryentry{SAD}
+{name=SAD (Security Associations Database),
+ description={La base de datos de asociaciones de seguridad forma parte de IPSec y contiene información confidencial como claves, números de secuencia, etc.}
+ }
+ 
+\newglossaryentry{ISAKMP}
+{name=ISAKMP (Internet Security Association and Key Management Protocol),
+ description={Protocolo de gestión de claves y asociación de seguridad de Internet que se utiliza para gestionar el intercambio de claves entre equipos de una VPN con IPSec.}
+ }
+ 
+\newglossaryentry{IKE}
+{name=IKE (Internet Key Exchange Protocol),
+ description={El protocolo de intercambio de claves de internet es un protocolo que combina elementos, definiciones y funcionalidad de protocolos como ISAKMP, SKEME y Oakley. Se utiliza en el marco de autentificación entre pares en redes VPN con IPSec.}
+ }
+ 
+\newglossaryentry{SKEME}
+{name=SKEME (Secure Key Exchange Mechanism),
+ description={Mecanismo de intercambio de claves seguras, cuya funcionalidad se utiliza en el protocolo IKE para el establecimiento de VPN con IPSec.}
+ }
+ 
+\newglossaryentry{Oakley}
+{name=Oakley (Oakley Key Determination Protocol),
+ description={Protocolo que permite el intercambio de claves entre partes mediante el algoritmo Diffie-Hellman, utilizado para establecer VPN con IPSec.}
+ }
+ 
+\newglossaryentry{PFS}
+{name=PFS (Perfect Fordward Secrecy),
+ description={Secreto de envío perfecto es una característica que implementa IKE para evitar que todos datos cifrados esten comprometidos cuando la clave lo esté. En este caso solamente estarán comprometidos los datos cifrados con esa clave, no los demás.}
+ }
+ 
+\newglossaryentry{PSK}
+{name=PSK (Pre-Shared Key),
+ description={Clave pre-compartida es un método de autenticación utilizado en la Fase I por el protocolo IKE para establecer una comunicación VPN con IPSec.}
+ }
+
+\newglossaryentry{PPTP}
+{name=PPTP (Point to Point Tunneling Protocol),
+ description={El protocolo punto a punto mediante túnel ha sido desarrollado por un conjunto de empresas cuyo objetivo consistía en utilizar el viejo protocolo conocido PPP para realizar conexiones punto a punto seguras bajo el protocolo TCP/IP.}
+ }
+
+\newglossaryentry{GRE}
+{name=GRE (Generic Routing Encapsulation),
+ description={Es un protocolo (número 47) destinado al establecimiento de túneles a través de Internet. Se utiliza en para establecer conexiones VPN con PPTP o PPP.}
+ }
+
+\newglossaryentry{TCP}
+{name=TCP (Transmission Control Protocol),
+ description={Es un protocolo de comunicación orientado a la conexión que trabaja en el nivel de transporte (capa 4) del modelo OSI. TCP añade las funciones necesarias para prestar un servicio libre de errores, sin pérdidas y con seguridad en la comunicación de dos sistemas.}
+ }
+
+\newglossaryentry{CHAP}
+{name=CHAP (Challenge Handshake Authentication Protocol),
+ description={Es un protocolo de autenticación por desafío mutuo, que se usaba en comunicaciones PPP con el proveedor de servicios de Internet (ISP).}
+ }
+
+\newglossaryentry{MS-CHAP}
+{name=MS-CHAP (Microsoft Challenge Handshake Authentication Protocol),
+ description={Es la versión desarrollada por Microsoft del protocolo CHAP con numerosas diferencias. Existen dos versiones, la primera ha sido eliminada en Windows Vista, y la segunda versión, denominada MS-CHAPv2 fue introducida a partir de Windows 2000.}
+ }
+
+\newglossaryentry{MPPE}
+{name=MPPE (Microsoft Point-to-Point Encryption),
+ description={Es un protocolo utilizado para encriptar comunicaciones a través de PPP y establecer enlaces VPN. Utiliza el algoritmo de encriptación RSA RC4 y soporta llaves de 40, 56 y 128 bits, que se cambian regularmente para aumentar la seguridad.}
+ }
+ 
+\newglossaryentry{tcpdump}
+{name=TCPdump,
+ description={Software en modo texto que permite monitorear los paquetes que entran y salen de una interfaz de red. Fue desarrollado por Van Jacobson, Craig Leres and Steven McCanne. Esta herramienta es muy utilizada por administradores de red para la depuración de errores y control de una red.}
+ }
+
+\newglossaryentry{Wireshark}
+{name=Wireshark,
+ description={Es una aplicación de filtrado de paquetes de libre distribución, con una amigable intrefaz gráfica que permite monitorear el tráfico de datos que entran y salen de una interfaz de red determinada. Esta es una derivación de Ethereal desarrollado inicialmente por Lyle Roussel, y actualmente mantenido por una gran comunidad de usuarios y desarrolladores.}
+ }
+ 
+\newglossaryentry{traceroute}
+{name=traceroute,
+ description={Es un software libre desarrollado para sistemas tipo Unix que permite seguir el rastro de un paquete entre host origen y host destino.}
+ }
+ 
+\newglossaryentry{tracert}
+{name=tracert,
+ description={Es un software que viene con Windows (versión 2000 en adelante) que permite seguir el rastro de un paquete entre host origen y host destino.}
+ }
+ 
+\newglossaryentry{SMB}
+{name=SMB (Server Message Block),
+ description={Es un protocolo utilizado para compartir archivos, impresoras, puertos otros tipos de comunicaciones a través de dos o más nodos de una red. Este opera en el nivel de aplicación.}
+ }
+ 
+\newglossaryentry{Nessus}
+{name=Nessus,
+ description={Software multiplataforma que escanea vulnerabilidades en redes y sistemas, distribuido de forma gratuita para usuarios finales pero de pago para empresas. Su desarrollador es la empresa Tenable Network Security.}
+ }
+ 
+\newglossaryentry{FTP}
+{name=FTP (File Transfer Protocol),
+ description={Protocolo de transferencia de archivos que se utiliza para enviar y recibir archivos en texto plano o binario entre dos terminales.}
+ }
+ 
+\newglossaryentry{swap}
+{name=Swap,
+ description={Es el término en inglés del espacio de intercambio de una zona del disco rísido (archivo o partición) que se utiliza para guardar los bloques que estaban en memoria y que no se utilizan para liberar la misma para otros procesos.}
+ }
+
+\newglossaryentry{TCP/IP}
+{name=TCP/IP (Internet Protocol Suite),
+ description={Es un conjunto de protocolos de comunicación que se utiliza en Internet y en otras redes similares. Sus componentes más importantes son TCP e IP, y se encuentran en representados en un modelo de capas, que van desde la capa de enlace hasta la capa de aplicación, pasando por la capa de Internet y la de transporte.}
+ }
+ 
+\newglossaryentry{DES}
+{name=DES (Data Encryption Standard),
+ description={Es un método de encriptación de información considerado inseguro para varias aplicaciones, el cual se ha reemplazado por AES (Advanced Encryption Standard).}
+ }
+ 
+\newglossaryentry{TripleDES}
+{name=Triple DES (Triple Data Encryption Standard),
+ description={Es un método de encriptación de información basado en DES que se utiliza tres veces.}
+ }
+ 
+\newglossaryentry{RAS}
+{name=RAS (Remote Access Service),
+ description={Es un conjunto de herramientas que combinan hardware y software para habilitar el acceso remoto a una red. Fue utilizado inicialmente por sistemas Windows que permitían el acceso mediante conexión por modem utilizando cualquier cliente RAS o un cliente PPP.}
+ }
+ 
+\newglossaryentry{OpenSSL}
+{name=OpenSSL,
+ description={Es una implementación de código abierto de los protocolos SSL y TLS, que soporta varios algorítmos criptográficos y se utiliza para la generación de claves en una VPN (o donde sea necesario).}
+ }
+ 
+\newglossaryentry{PGP}
+{name=PGP (Pretty Good Privacy),
+ description={Es un programa que provee de privacidad criptográfica y autenticación, utilizado para firmar, cifrar y descifrar mensajes de correo electrónico, para saber que el remitente es quien dice serlo.}
+ }
+ 
+\newglossaryentry{SSH}
+{name=SSH (Secure SHell),
+ description={Es un protocolo de red que permite el intercambio de datos mediante un canal seguro entre dos dispositivos de red. SSH es un reemplazo al antiguo Telnet que enviaba datos en texto plano.}
+ }
+
+\newglossaryentry{PPP}
+{name=PPP (Point to Point Protocol),
+ description={El protocolo punto a punto permite establecer una conexión a nivel de enlace entre dos nodos. Las funciones más básicas que ofrece son: autenticación y asignación dinámica de dirección IP. Su desventaja es que no encripta el tráfico de paquetes.}
+ }
+ 
+\newglossaryentry{kernel}
+{name=kernel,
+ description={Es el núcleo de un sistema operativo que permite la intercomunicación entre procesos, administración de memoria, control del hardware, entre otras funciones.}
+ }
+ 
+\newglossaryentry{GNU}
+{name=GNU,
+ description={Acrónimo recursivo que significa ``GNU is Not Unix'', cuya filosofía, encabezada por Richard Stallman, permitió la utilización de software liberado por licencias de tipo GPL que permiten copiar, distribuir y modificar el código fuente.}
+ }
+ 
+\newglossaryentry{HMAC}
+{name=HMAC (keyed-Hash Message Authentication Code),
+ description={En criptografía, es un tipo de código de autenticación de mensajes, que se calcula utilizando un algorítmo específico que incluye la función criptográfica hash para combinarla con la clave secreta. Se utiliza para verificar la integridad de datos y autenticidad del mensaje.}
+ }
+
+\newglossaryentry{LZO}
+{name=LZO (Lempel-Ziv-Oberhumer),
+ description={Es un algorítmo de compresión de datos de menor pérdida enfocado en la velocidad de descompresión. Fue escrito originalmente en ANSI C, pero luego portado a Perl, Python y Java.}
+ }
+
+\newglossaryentry{SCP}
+{name=SCP (Secure Copy),
+ description={Es una aplicación de transferencia segura de archivos entre un host local y otro remoto, que utiliza el protocolo SSH.}
+ }
+
+\newglossaryentry{DMZ}
+{name=DMZ (DeMilitarized Zone),
+ description={Una zona desmilitarizada es una red local que se ubica entre la red interna de una organización e Internet. El objetivo es que las conexiones desde la red interna y la externa a la DMZ estén permitidas, mientras que las conexiones desde la DMZ sólo se permitan a la red externa; los hosts en la DMZ no pueden conectar con la red interna. Esto permite que los equipos de la DMZ puedan dar servicios a la red externa a la vez que protegen la red interna en el caso de que intrusos comprometan la seguridad de los servidores de la zona desmilitarizada. La DMZ se usa habitualmente para ubicar servidores que es necesario que sean accedidos desde fuera, como servidores de e-mail, Web y DNS.}
+ }
+
+\newglossaryentry{FrameRelay}
+{name=Frame Relay,
+ description={Es una técnica de comunicación mediante retransmisión de tramas, que consiste en una forma simplificada de tecnología de conmutación de paquetes que transmite una variedad de tamaños de tramas para datos, ideal para la transmisión de grandes cantidades de datos. Se utiliza para la transmisión de voz y datos a alta velocidad entre dos o más redes LAN separadas geográficamente.}
+ }
+ 
+\newglossaryentry{MPLS}
+{name=MPLS (Multiprotocol Label Switching),
+ description={Es un mecanismo de transporte de datos estándar que opera entre la capa de enlace de datos y la capa de red del modelo OSI. Fue diseñado para unificar el servicio de transporte de datos para las redes basadas en circuitos y las basadas en paquetes, por lo que puede transportar distinto tipo de tráfico, incluso voz y paquetes IP.}
+ }
+ 

@@ -1,0 +1,454 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   |-------------------------|                        %
+%   |REDES PRIVADAS VIRTUALES |                        %
+%   |                         |                        %
+%   | Proyecto de graduación  |                        %
+%   |_________________________|                        %
+%                                                      %
+%   Autores                                            %
+%   -------                                            %
+%                                                      %
+% * Formoso Requena, Nicolás Federico (CX02-0239-8)    %
+%     nicolasformoso@gmail.com                         %
+% * Cortez, Gustavo Maximiliano (CX01-0801-9)          %
+%     cmgustavo83@gmail.com                            %
+%                                                      %
+%   Tutores                                            %
+%   -------                                            %
+%                                                      %
+% * Ing. Gustavo Vanetta - vanettag@gmail.com          %
+% * Lic. Miguel Bazzano - miguelbazzano@gmail.com      %
+%                                                      %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% ************* VPN con PPTP *************** %
+
+\chapter{VPN usando PPTP}
+\label{chap:proto_pptp}
+
+PPTP es un protocolo diseñado para establecer comunicaciones seguras entre dos terminales, que luego se terminaron usando para establecer una VPN de tipo host a host (o en algunos casos, host a red). En este capítulo se describirá brevemente el protocolo junto a sus ventajas y desventajas de uso.
+
+También se explicará la configuración de PPTP a través de Internet (utilizando tanto Windows como Linux y OpenBSD), teniendo en cuenta que el usuario se encuentra en una red local, por lo que se mostrarán los detalles de configuración del firewall y los parámetros necesarios para establecer una VPN con PPTP.
+
+\section{Introducción a PPTP}
+\label{sec:pptp_introduccion}
+
+El protocolo \gls{PPTP} ha sido desarrollado por Microsoft, U.S. Robotics, Ascend Communications, 3Com/Primary Access, ECI Telematics conocidas colectivamente como PPTP Forum, para implementar redes privadas virtuales y asegurar conexiones punto a punto.
+
+PPTP se utiliza de manera más específica para crear sesiones VPN para usuarios móviles en configuraciones host a red o host a host. La integración que tiene PPTP con Windows es nativa, pero con otros sistemas operativos, se utilizan portes o adaptaciones que siguen las especificaciones del protocolo.
+
+El único motivo por el que se requiere de una implementación del protocolo para sistemas Linux o BSD, es para dar soporte a la gran cantidad usuarios móviles que utilizan Windows, ya que para establecer una conexión host a host con el mismo sistema operativo, el proceso de configuración no resulta para nada complicado.
+
+\subsection{Funcionamiento de PPTP}
+
+PPTP utiliza para establecer conexiones VPN seguras. Primero, realiza el encapsulado de los paquetes de datos dentro de paquetes PPP. Luego se encapsulan estos paquetes usando el protocolo \gls{GRE} y se los envía al otro extremo del enlace.
+
+Además de los paquetes GRE, que comprimen los datos PPTP reales, se utiliza un segundo canal de control para la conexión. Esta es una conexión \gls{TCP} sencilla desde el cliente al puerto 1723 del servidor. Se la utiliza para enviar información de señalización y para comprobar el estado de la conexión PPTP.
+
+Por otro lado, PPTP no especifica qué algoritmos de cifrado o autenticación utilizar, sino que esta tarea queda para la sesión PPP subyacente.
+
+\subsection{Autenticación y cifrado}
+
+Para permitir autenticación y cifrado en la sesión PPTP, se han tenido que añadir unos cuantos algoritmos a PPP. Para la autenticación, se ha añadido una variante de \gls{CHAP}, llamada \gls{MS-CHAP}. Este se basa en dos métodos de Microsoft utilizados para la autenticación y compartimiento de archivos: el algoritmo de dispersión LAN Manager (basado en el cifrado DES) y el algoritmo de dispersión Windows NT (basado en la función de dispersión MD4).
+
+La segunda extensión de PPP es el protocolo \gls{MPPE} que maneja el cifrado real de los paquetes. Utiliza el cifrado de flujo RC4 para cifrar los datos con una clave de 40 a 128 bits. La clave de cifrado utilizada para el cifrado deriva parcialmente de la contraseña del usuario mediante el algoritmo LAN Manager o el algoritmo NT. Las claves de sesión utilizadas para el cifrado se cambian periódicamente, normalmente después de cada 256 paquetes.
+
+\section{PPTP con Windows}
+\label{sec:pptp_servidor_windows}
+
+En esta sección se mostrará cómo configurar un servidor VPN en Windows Vista, de la manera más simple posible, que permite varias conexiones entrantes mediante autenticación por nombre de usuario y contraseña.
+
+Como no se trata de un servidor \emph{dedicado}, sino más bien de una estación de trabajo que se configura para aceptar conexiones de otros clientes, la puesta a punto de la misma puede estar al alcance de cualquier usuario de oficina. Esto podría considerarse una falla de seguridad, ya que al permitir conexiones entrantes ajenas a la red interna sin considerar una política de seguridad adecuada, puede suceder que la conexión permitida no sea quien dice ser (es decir, sea un hacker con malas intenciones).
+
+Para solventar este problema, se realizarán retoques en la configuración del firewall de la red, para permitir conexiones entrantes solamente a los equipos supervisados y autorizados para dicha función.
+
+\subsection{Modo de conexión}
+
+Para comunicar dos equipos utilizando el protocolo PPTP se realiza una conexión de tipo host a host, entre terminales con el sistema operativo Windows.
+
+Una VPN host a host (o punto a punto) involucra únicamente a dos equipos, donde uno actúa como servidor y el otro como cliente. Estos pueden estar ubicados en puntos muy distantes o en subredes distintas. Solamente si se puede establecer una ruta de comunicación entre ambos terminales, se podrá realizar la conexión VPN.
+
+Este tipo de conexiones, en apariencia tan limitadas, encuentran su fin práctico cuando dos servidores de una empresa necesitan sincronizar datos confidenciales, y deben hacerlo a través de redes de acceso público donde se corre el riesgo de que los datos sean interceptados por destinos no deseados. De esta manera, los datos viajan seguros a través de un medio hostil. Un esquema simplificado de este tipo de conexión se puede ver en la Figura \ref{fig:esquema_hostahost}.
+
+\begin{figure}[htbp]
+	\begin{center}
+	\includegraphics{imagenes/host-host/esquema_h2h}
+	\caption{Esquema de conexión de las redes utilizadas.}
+	\label{fig:esquema_hostahost}
+	\end{center}
+\end{figure}
+
+\subsection{Directivas del Firewall}
+
+Para aceptar conexiones entrantes del cliente se debe abrir el puerto 1723 (PPTP) tanto para paquetes TCP como para UDP, y además de permitir paquetes que utilicen el protocolo GRE, tanto a la entrada como a la salida de datos.
+
+\begin{configuracion}
+\begin{listing}[style=configuracion]
+# Redireccionamiento de paquetes al servidor VPN 
+rdr pass on $ext_if proto tcp from any to any port pptp -> $server_vpn
+rdr pass on $ext_if proto gre from any to any -> $server_vpn
+ 
+# Reglas de filtrado para la entrada y salida de conexiones VPN. 
+pass in quick on $ext_if proto tcp from any to any port pptp \ 
+	flags S/FSRA keep state
+
+# Paquetes GRE para conexion VPN saliente
+pass on $ext_if proto gre from any to any
+\end{listing}
+\caption{Aceptar conexiones PPTP y GRE.}
+\label{config:config_host_to_host}
+\end{configuracion}
+
+Estas directivas requieren pequeñas modificaciones en el Packet Filter, tal como se muestra en el Código \ref{config:config_host_to_host}. Luego de agregar estas líneas, se debe volver a recargar PF con \emph{pfctl -f /etc/pf.conf}.
+
+\subsection{Aceptar conexiones con Windows Vista}
+
+La configuración de un servidor VPN en Windows Vista resulta más sencilla cuando se trata de una comunicación simple de tipo host a host. En primer lugar lo que se crea es una conexión entrante, que permita el ingreso de conexiones desde el exterior a la red \emph{virtual}.
+
+Para que esta comunicación pueda establecerse, hay que configurar el firewall del equipo, ya que hoy en día todas las computadoras personales disponen de algún antivirus con firewall incorporado con el fin de evitar el ingreso de intrusos que pongan en peligro los datos personales, que desde el punto de vista del usuario son más importantes que los fallos del sistema (que puede solucionarse en la mayoría de los casos con una simple reinstalación), pero como administrador de una red local, en la que no solo se considera importante la pérdida de datos de un usuario, sino también de la seguridad del sistema y de toda la red, al establecerse una comunicación VPN se la realiza con el firewall activado y configurado para bloquear todas las conexiones entrantes y evitar que clientes poco precavidos pongan en riesgo la seguridad de toda la red.
+
+La configuración del firewall consta en habilitar el compartir archivos de Windows y el puerto PPTP que se utiliza en las conexiones punto a punto entre equipos con sistemas de Microsoft. Luego, entra en acción el equipo servidor de VPN, el cual realiza la negociación de la conexión estableciendo el tipo de encriptación, de protocolos que se van a utilizar y del método que se envía la contraseña. Una vez establecidos estos parámetros, el sistema le asigna una dirección IP (puede ser cualquier dirección IP privada válida, siempre que no interfiera con los rangos ya seleccionados) al cliente, estableciendo la conexión propiamente dicha.
+
+\begin{figure}[htb]
+	\begin{center}
+	\includegraphics{imagenes/host-host/conf_server2}
+	\caption{Usuarios permitidos para conectarse a la VPN.}
+	\label{fig:conexiones_usuarios}
+	\end{center}
+\end{figure}
+
+En Windows Vista el asistente para crear una conexión entrante resulta sencillo e intuitivo de usar, ya que las opciones por defecto son en general la mejor elección. Al abrir la ventana de administración de interfaces de red, se visualizan las conexiones establecidas, en la que se muestran detalles como la dirección asignada, máscara de red, servidor DNS primario y secundario asignados, direcciones MAC, entre otros.
+
+La elección de un usuario para que se conecte con el equipo servidor puede ser muy crítica a la hora de mantener la seguridad del sistema (y por qué no, de toda la red), ya que dar a alguien privilegios de administrador y contraseña fácil de romper, puede significar un gran problema de seguridad (Figura \ref{fig:conexiones_usuarios}). En este caso, se crea un usuario específico para la conexión VPN, al cual se le asignan los permisos necesarios para las acciones mínimas en la red (como copiar archivos del servidor). 
+
+\begin{figure}[htb]
+	\begin{center}
+	\includegraphics{imagenes/host-host/conf_server5}
+	\caption{Direcciones IP habilitadas para asignar a los usuarios.}
+	\label{fig:conexiones_ip}
+	\end{center}
+\end{figure}
+
+El asistente de configuración de conexiones entrantes también pregunta por el software de red que se le habilitará a los usuarios que se conecten a la VPN, seleccionando por defecto las opciones de \gls{TCP}/\gls{IPv4}, de compartir archivos e impresoras y de calidad de servicio. Pero para que funcionen estos servicios se debe configurar el firewall local para aceptar este tipo de conexiones.
+
+Como última opción del asistente, se pueden configurar las direcciones IP que se les darían a los usuarios, permitiendo asignar direcciones que pertenezcan a otra red y así diferenciar la red local de la red VPN. En la Figura \ref{fig:conexiones_ip} se puede ver que el total de conexiones es de 5 usuarios, pero uno de ellos representa el servidor de VPN, que establece un puente virtual entre el sistema local y la nueva interfaz de red (que se crea automáticamente).
+
+Si se escribiera un grupo de direcciones IP que pertenecen a una subred diferente (por ejemplo: 192.168.1.0), el asistente de configuración de conexión entrante, configurará automáticamente la tabla de ruteo para exista una comunicación entre la red actual y la creada para la VPN. 
+
+Por otro lado es importante señalar, que a la primera conexión entrante, el sistema crea una nueva entrada en la tabla de ruteo que dirige el tráfico de la VPN hacia la puerta de enlace (servidor de Internet) para todos los paquetes que no pertenezcan a la red local o a la red creada para la VPN. Es decir que además de crear una conexión segura entre dos enlaces, también se puede acceder a Internet sin temer que los mismos miembros de la red registren los paquetes y descubran información personal del usuario.
+
+\subsection{Cliente PPTP con Windows}
+\label{subsec:pptp_configuracion_cliente}
+
+El proceso de configuración del cliente es sencillo y contiene pocos elementos para configurar, ya que solo realiza la conexión al servidor y es éste quien negocia los parámetros establecidos necesarios. En definitiva, la mayor dificultad en cuanto a configuración se encuentra en el servidor.
+
+Para conectar al servidor de VPN, se debe crear en el cliente una nueva conexión. Como Microsoft diseña la mayoría de sus sistemas operativos para que sus usuarios finales no necesiten conocimientos profundos sobre los mismos, las opciones que se muestran a medida que avanza el asistente de configuración, no contiene muchas especificaciones, como se puede ver en la Figura \ref{fig:config_cliente_2}.
+
+\begin{figure}[htb]
+	\begin{center}
+	\includegraphics{imagenes/host-host/cliente/ss02}
+	\caption{Configuración Cliente, tipo de conexión.}
+	\label{fig:config_cliente_2}
+	\end{center}
+\end{figure}
+
+Posteriormente, se debe especificar si el establecimiento de la conexión estará precedido por el de otra, es decir, si para establecer la ruta entre el cliente y el servidor de la VPN, es necesario tener una conexión a Internet ya establecida, o a otra red.
+
+En general la conexión a Internet ya está establecida por el servidor de la red local, por lo que en el menú correspondiente se selecciona la opción de no utilizar la conexión inicial.
+
+Luego se debe especificar el nombre de dominio o la dirección IP del servidor VPN. Esto implica que el cliente siempre que quiera conectarse a la VPN deberá conocer la IP del servidor. Por lo que, dicha dirección, no debe ser variable, o en su defecto debe existir un nombre de dominio que pueda \emph{seguir} los cambios de la misma. En la sección \ref{sec:automatizacion_conexion} se explica cómo obtener un nombre de dominio permanente, aún teniendo una dirección IP variable.
+
+Terminado el asistente, se puede ver que dentro de ``Conexiones de red'' que se ha creado una nueva conexión, que es la que se utiliza para conectar al servidor de la red privada virtual.
+
+\subsection{Resultado}
+
+Establecida la conexión VPN, ambos hosts tendrán la impresión de que están en una misma subred privada (distinta a la que cada uno de ellos está conectado realmente); además, los datos transmitidos entre ellos a través de la VPN, serán \emph{invisibles} a los demás usuarios.
+
+El protocolo de autenticación de claves utilizado es \gls{MS-CHAP} v2; y el algoritmo de cifrado para los mensajes es \gls{MPPE}, de 128 bits.
+
+El esquema resultante de la VPN se muestra en la Figura \ref{fig:pptp_esquema_vpn}.
+
+\begin{figure}[htb]
+	\begin{center}
+	\includegraphics{imagenes/host-host/esquema_vpn}
+	\caption{Esquema básico de un enlace host a host.}
+	\label{fig:pptp_esquema_vpn}
+	\end{center}
+\end{figure}
+
+\section{PPTP con software libre}
+\label{sec:pptp_linux_openbsd}
+
+Con la popularidad de Windows y su protocolo PPTP para establecer enlaces punto a punto seguros, era necesario integrar otros sistemas operativos para permitir este tipo de conexiones, ya que la mayoría de los clientes de escritorios contaban con Windows como sistema principal.
+
+De esta manera, se ha iniciado el desarrollo de un clon del protocolo de código fuente abierto en conjunto con Microsoft para permitir la integración de equipos Windows con cualquier otro sistema operativo mediante un enlace seguro y compatible con el original PPTP. Este desarrollo se ha denominado PoPToP \footnote{Juego de palabras que, en definitiva, significa PPTP. \href{http://www.poptop.org/}{http://www.poptop.org/}.}.
+
+\subsection{Características de PoPToP}
+
+PoPToP se ha portado a la mayoría de los sistemas operativos, incluyendo Linux y OpenBSD. Gracias a esto, se pueden integrar sistemas heterogéneos (incluyendo equipos con Windows) mediante un enlace común y asegurado por PPTP. Entre las características técnicas que tiene PoPToP se pueden listar las siguientes:
+
+\begin{itemize}
+	\item Autenticación y encriptación compatible con Microsoft (MSCHAPv2, MPPE 40 - 128 bit RC4 encryption).
+	\item Soporte para múltiples conexiones.
+	\item Mediante el uso de plugin se pueden integrar entronos de redes (LDAP, SAMBA).
+	\item Es compatible con el cliente PPTP de Linux.
+	\item Es totalmente gratuito bajo licencia GNU (General Public Licence).
+\end{itemize}
+
+\subsection{Instalación de PoPToP}
+
+En Linux (Ubuntu Server 8.04) se han realizado las pruebas de conexión e interacción con sistemas Windows XP y Vista. La instalación de PoPToP no requiere gran intervención por el administrador; se realiza mediante el comando:
+
+\begin{listing}[style=consola, numbers=none]
+gustavo@wasa:~$ sudo apt-get install pptpd
+...
+gustavo@wasa:~$
+\end{listing}
+
+De esta manera, se instala el \texttt{daemon} PPTP y se inicia automáticamente.
+
+Para establecer una conexión fiable, se necesitan modficiar algunos parámetros de configuración, como el rango de direcciones IP que puede aceptar (que limita también la cantidad de clientes que pueden acceder simultáneamente), los certificados (si es que se utilizan), entre otros.
+
+\subsection{Configuración de PPTP}
+
+Los archivos necesarios para configurar PoPToP correctamente son los siguientes:
+
+\begin{enumerate}
+	\item \texttt{/etc/pptpd.conf}
+	\item \texttt{/etc/ppp/pptpd-options.conf}
+	\item \texttt{/etc/ppp/chap-secrets}
+\end{enumerate}
+
+El primer archivo es el utilizado por PoPToP para lanzar el \texttt{daemon} PPTPD, además de las direcciones IP del servidor y las que se asignan a los clientes. En la Configuración \ref{config:pptpd.conf} se puede ver un ejemplo básico de funcionamiento.
+
+\begin{configuracion}
+\begin{listing}[style=configuracion]
+option /etc/ppp/pptpd-options
+debug
+logwtmp
+localip 192.168.2.1
+remoteip 192.168.2.2-9
+\end{listing}
+\caption{Ejemplo de configuración básica de PoPToP.}
+\label{config:pptpd.conf}
+\end{configuracion}
+
+En la primera línea se debe indicar el archivo secundario de configuración del daemon PPTPD, que en este caso se encuentra en \texttt{/etc/ppp/pptpd-options}. La segunda línea indica que se muestren todos los mensajes en el archivo de registro. La tercera indica que se registren todas las conexiones y desconexiones de los clientes para PPP, ya que por defecto se encuentra habilitada para las otras interfaces (como pts/0 o tty1) y es bastante útil para saber en qué horarios se conectaron, por cuanto tiempo y cuando se desconectaron los clientes.
+
+Finalmente las últimas dos líneas indican la dirección IP del servidor y el rango de direcciones que se les asignan a los clientes respectivamente. Si se supera este rango, no se aceptan más conexiones, por lo que en este caso solo se permiten ocho clientes simultáneamente.
+
+\begin{configuracion}
+\begin{listing}[style=configuracion]
+name pptpd
+domain red.lan
+refuse-pap
+refuse-chap
+refuse-mschap
+require-mschap-v2
+require-mppe-128
+ms-dns 192.168.0.1
+proxyarp
+lock
+nobsdcomp
+\end{listing}
+\caption{Ejemplo de opciones en pptp-options.}
+\label{config:pptpd-options}
+\end{configuracion}
+
+En el archivo de Configuración \ref{config:pptpd-options} se indican el método de encriptación utilizado, los servidores DNS, el gateway, entre otras opciones. También se puede observar que se rechazan conexiones utilizando el método de autenticación antiguo de Microsoft, el \gls{MS-CHAP} versión 1 (pero se acepta la versión 2), ya que presenta problemas de seguridad debido a que envía la contraseña del cliente utilizando el algoritmo LAN Manager que es muy débil y luego un \emph{hash} Windows NT que dependía de la primera. Por lo tanto se podría quebrar el algoritmo fácilmente con la herramienta L0phtcrack\footnote{\href{http://es.wikipedia.org/wiki/L0phtCrack}{http://es.wikipedia.org/wiki/L0phtCrack}}.
+
+El último archivo es un simple archivo de texto que debería tener permisos limitados solo para el propietario (0600), ya que contiene el nombre de usuario y contraseña de los clientes. Además se incluyen las direcciones IP de los hosts desde los que pueden efectuar la conexión, que pueden ser sustituidas por un asterisco para indicar que el usuario puede conectarse desde cualquier equipo.
+
+\subsection{Estableciendo conexión}
+
+Para establecer la conexión con el servidor PPTP, se utiliza la misma configuración descripta anteriormente en la Sección \ref{subsec:pptp_configuracion_cliente}.
+
+Cuando el sistema detecta una conexión entrante, realiza el proceso de intercambio de información, entre los que se encuentra el envío de las claves del usuario, y finalmente se acepta o rechaza la conexión. En caso afirmativo, se muestra la siguiente salida en el registro del sistema:
+
+\begin{listing}[style=consola, numbers=none]
+Oct 17 09:23:11 wasa pptpd[5520]: CTRL: Client 190.137.67.68 control connection started
+Oct 17 09:23:11 wasa pptpd[5520]: CTRL: Starting call (launching pppd, opening GRE)
+Oct 17 09:23:11 wasa pppd[5521]: Plugin /usr/lib/pptpd/pptpd-logwtmp.so loaded.
+Oct 17 09:23:11 wasa pppd[5521]: pppd 2.4.4 started by root, uid 0
+Oct 17 09:23:11 wasa pppd[5521]: Using interface ppp1
+Oct 17 09:23:11 wasa pppd[5521]: Connect: ppp1 <--> /dev/pts/3
+Oct 17 09:23:11 wasa pptpd[5520]: GRE: Bad checksum from pppd.
+Oct 17 09:23:11 wasa pptpd[5520]: CTRL: Ignored a SET LINK INFO packet with real ACCMs!
+Oct 17 09:23:11 wasa pppd[5521]: MPPE 128-bit stateless compression enabled
+Oct 17 09:23:13 wasa pppd[5521]: Cannot determine ethernet address for proxy ARP
+Oct 17 09:23:13 wasa pppd[5521]: local  IP address 192.168.2.1
+Oct 17 09:23:13 wasa pppd[5521]: remote IP address 192.168.2.3
+\end{listing}
+
+En este caso se establecen las direcciones IP local (del servidor) y la asignada a la nueva conexión. También se puede ver que se utiliza una encriptación \gls{MPPE} de 128 bit con compresión habilitada.
+
+Los dispositivos que crea cada conexión remota PPTP, se denominan por defecto ppp\textbf{X}, donde \textbf{X} es un número que se incrementa por cada conexión, comenzando en cero. Por ejemplo la siguiente salida se obtiene del comando \emph{ifconfig}:
+
+\begin{listing}[style=consola, numbers=none]
+ppp0      Link encap:Point-to-Point Protocol
+          inet addr:192.168.2.1  P-t-P:192.168.2.2  Mask:255.255.255.255
+          UP POINTOPOINT RUNNING NOARP MULTICAST  MTU:1396  Metric:1
+          RX packets:64 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:17 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:3
+          RX bytes:5610 (5.4 KB)  TX bytes:628 (628.0 B)
+          
+ppp1      Link encap:Point-to-Point Protocol
+          inet addr:192.168.2.1  P-t-P:192.168.2.3  Mask:255.255.255.255
+          UP POINTOPOINT RUNNING NOARP MULTICAST  MTU:1396  Metric:1
+          RX packets:36 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:11 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:3
+          RX bytes:3667 (3.5 KB)  TX bytes:288 (288.0 B)
+\end{listing}
+
+En la salida anterior se puede observar que se han establecido dos conexiones remotas y que se encuentran activas en ese instante. El primer campo de ``inet addr'' corresponde a la dirección IP del servidor, mientras que ``P-t-P'' refiere a la dirección IP asignada a la conexión entrante. Luego se utiliza esta dirección IP para establecer las tablas de ruteo:
+
+\begin{listing}[style=consola, numbers=none]
+gustavo@wasa:/etc/ppp$ route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+192.168.2.2     *               255.255.255.255 UH    0      0        0 ppp0
+192.168.0.0     *               255.255.255.0   U     0      0        0 eth1
+default         192.168.0.1     0.0.0.0         UG    100    0        0 eth1
+gustavo@wasa:/etc/ppp$
+\end{listing}
+
+De lo anterior se puede observar que hay solamente una conexión activa (en ppp0) donde se ha establecido la dirección IP \texttt{192.168.2.2} al equipo remoto. Pero se ha especificado que no cambie el ruteo ``default gateway'', por lo que se mantiene el servidor anterior ( es decir, la IP \texttt{192.168.0.1} como pasarela predeterminada).
+
+\section{Rendimiento de la conexión}
+\label{sec:host_to_host_rendimiento_conexion}
+
+Mientras se realizaban las pruebas de conexión, se utilizaron sistemas de monitoreo que permiten visualizar gráficamente el rendimiento antes y durante la conexión VPN establecida. En el servidor, el software se llama \textbf{Monitor de confiabilidad y rendimiento} y viene integrado al sistema operativo.
+
+En la Figura \ref{fig:monitor_vpn} se puede observar el rendimiento de la CPU y consumo de memoria al momento de establecerse la conexión entrante del primer usuario al servidor VPN.
+
+\begin{figure}[htb]
+	\begin{center}
+	\includegraphics{imagenes/host-host/monitor_sistema_convpn2}
+	\caption{Rendimiento del sistema (con el servicio de VPN).}
+	\label{fig:monitor_vpn}
+	\end{center}
+\end{figure}
+
+Para evaluar la comunicación se realizaron varios experimentos, aunque para poder comprobar el rendimiento y comportamiento de la VPN en un entorno de conexión real, se necesitan muchas conexiones simultáneas de las que no se dispone, por lo que se realizarán las evaluaciones con una sola conexión activa.
+
+La distancia entre los hosts no supera los 5 saltos (obtenidos mediante el comando \texttt{tracert}). Además el horario en el que se realizan dichas pruebas tiene gran influencia en el rendimiento, por lo que se ha optado por una franja horaria de testeo entre las 9 y 10 de la mañana.
+
+\subsection{Escritorio virtual}
+
+Una de las aplicaciones utilizadas para la conexión a un escritorio remoto y tener control total del equipo es \textbf{UltraVNC}.
+
+El sistema de escritorio compartido \gls{VNC} fue desarrollado inicialmente por AT\&T para la gestión de escritorio remotos. Por su parte microsoft ha desarrollado su propio sistema de administración de escritorio remoto, pero para estas pruebas, se ha utilizado UltraVNC, que es software libre y sirve para el mismo propósito. VNC utiliza el protocolo RFB (Remote Framebuffer) para traer la interfaz gráfica del servidor al cliente, de manera que se visualice en pantalla lo que esta viendo el otro.
+
+UltraVNC tiene dos modos de ejecución, el modo cliente y el modo servidor. En el modo servidor se establece una contraseña de tipo pre compartida, que es necesaria para establecer la conexión. Además, en el servidor se definen los parámetros tales como interfaz de ``escucha'', puertos, posibilidad de usar el navegador mediante el plugin de Java, entre otras opciones más. El cliente, por su parte solo permite elegir la velocidad de conexión (además de la dirección IP). Cuanto mayor es la velocidad de conexión, se incluyen más detalles y cantidad de colores del escritorio remoto.
+
+En la Figura \ref{fig:pptp_vnc_server} se muestra una sesión de UltraVNC a una velocidad de conexión media (unos 20 Kbytes por segundo), por lo que no se obtienen todas las características gráficas ni los colores para una imagen nítida. Esto se debe a dos factores, uno es el ancho de banda de la conexión a Internet establecida por el proveedor de servicios (para la subida de datos que es de 256 Kbps), y la otra por el mismo retardo y consumo de recursos del protocolo PPTP.
+
+\begin{figure}[htb]
+	\begin{center}
+	\includegraphics{imagenes/host-host/vnc_server}
+	\caption{Sesión de UltraVNC a través del enlace VPN con PPTP.}
+	\label{fig:pptp_vnc_server}
+	\end{center}
+\end{figure}
+
+\subsection{Transferencia de archivos}
+
+Para la transferencia de archivos usando los sistemas Windows como se han descripto anteriormente, se procede de la manera tradicional, como si de una red local se tratara, es decir, compartiendo archivos mediante el protocolo SMB de Microsoft. La Figura \ref{fig:transferencia_host_to_host} muestra la tasa de transferencia medida en Bytes por segundos de un archivo de música con compresión mpeg-layer3.
+
+\begin{figure}[htb]
+	\begin{center}
+	\includegraphics{imagenes/host-host/copia_hosthost}
+	\caption{Transferencia de un archivo, a través de la VPN host a host.}
+	\label{fig:transferencia_host_to_host}
+	\end{center}
+\end{figure}
+
+\subsection{Registro de conexiones}
+
+Para realizar el registro de conexiones y verificar que el tráfico de información se realiza de forma segura, se recurre a herramientas que monitorean el tráfico de datos de una interfaz de red determinada. En el servidor y cliente se ha utilizado el software \texttt{Wireshark} antes y después de establecer la conexión y transferir datos, con una salida similar a la que se muestra en el Registro \ref{logs:transferencia_host_to_host}.
+
+\begin{logs}
+  \begin{alltt}
+  \scriptsize
+  Source       Destination  Protocol Info
+  200.45.35.51 192.168.0.35 TCP      scanstat-1 > pptp [SYN] Seq=0 Win=65535 Len=0 MSS=1440
+  192.168.0.35 200.45.35.51 TCP      pptp > scanstat-1 [SYN, ACK] Seq=0 Ack=1 Win=8192 Len=0 MSS=1460
+  200.45.35.51 192.168.0.35 PPTP     Start-Control-Connection-Request
+  192.168.0.35 200.45.35.51 PPTP     Start-Control-Connection-Reply
+  200.45.35.51 192.168.0.35 PPTP     Outgoing-Call-Request
+  192.168.0.35 200.45.35.51 PPTP     Outgoing-Call-Reply
+  200.45.35.51 192.168.0.35 PPTP     Set-Link-Info
+  200.45.35.51 192.168.0.35 PPP LCP  Configuration Request
+  192.168.0.35 200.45.35.51 PPP LCP  Configuration Request
+  192.168.0.35 200.45.35.51 PPP LCP  Configuration Ack
+  200.45.35.51 192.168.0.35 PPP LCP  Configuration Reject
+  192.168.0.35 200.45.35.51 PPP LCP  Configuration Request
+  200.45.35.51 192.168.0.35 PPP LCP  Configuration Ack
+  192.168.0.35 200.45.35.51 PPTP     Set-Link-Info
+  200.45.35.51 192.168.0.35 PPP LCP  Identification
+  192.168.0.35 200.45.35.51 PPP CHAP Challenge (NAME='NIPPUR', VALUE=0x515E1AE701 ... )
+  200.45.35.51 192.168.0.35 PPTP     Set-Link-Info
+  200.45.35.51 192.168.0.35 PPP CHAP Response (NAME='remoto', VALUE=0xDFA67872B6F ... )
+  192.168.0.35 200.45.35.51 GRE      Encapsulated PPP
+  192.168.0.35 200.45.35.51 TCP      pptp > scanstat-1 [ACK] Seq=213 Ack=373 Win=64584 Len=0
+  192.168.0.35 200.45.35.51 PPP CHAP Success (MESSAGE='S=817B882E753E7CC2732C41D78E34FAD05D59C59B')
+  192.168.0.35 200.45.35.51 PPP CBCP Callback Request
+  200.45.35.51 192.168.0.35 PPP CBCP Callback Response
+  192.168.0.35 200.45.35.51 PPP CBCP Callback Ack
+  200.45.35.51 192.168.0.35 PPP CCP  Configuration Request
+  200.45.35.51 192.168.0.35 PPP IPCP Configuration Request
+  192.168.0.35 200.45.35.51 GRE      Encapsulated PPP
+  192.168.0.35 200.45.35.51 PPP CCP  Configuration Request
+  192.168.0.35 200.45.35.51 PPP IPCP Configuration Request
+  192.168.0.35 200.45.35.51 GRE      Encapsulated PPP
+  200.45.35.51 192.168.0.35 PPP Comp Compressed data
+  192.168.0.35 200.45.35.51 GRE      Encapsulated PPP
+  ...
+  \end{alltt}
+  \caption{Establecimiento de la conexión host a host.}
+  \label{logs:transferencia_host_to_host}
+\end{logs}
+
+Cuando se ha experimentado error en la conexión, como se puede observar en el Registro \ref{logs:error_host_to_host}, se debe a la mala configuración de los firewall en ambos extremos, de manera que si el cliente se conectaba al servidor, este último no podía devolver el recibo de conexión al cliente, por lo que este nunca se enteraba si el servidor había aceptado su petición.
+
+También se puede observar que si no se utilizara PPTP para transferir la información, y en alguno de los casos se envía texto plano, el programa Wireshark mostraría el texto tal cual, aunque sea una contraseña o número de tarjeta de crédito. Por esto la importancia de utilizar PPTP a la hora de enviar información sensible, de forma rápida y segura entre dos equipos.
+
+\begin{logs}
+  \begin{alltt}
+	\scriptsize
+  Source        Destination   Protocol Info
+  192.168.0.35  200.45.153.14 TCP      62944 > pptp [SYN] Seq=0 Win=8192 Len=0 MSS=1460
+  200.45.153.14 192.168.0.35  TCP      pptp > 62944 [SYN, ACK] Seq=0 Ack=1 Win=65535 Len=0 MSS=1440
+  192.168.0.35  200.45.153.14 TCP      62944 > pptp [ACK] Seq=1 Ack=1 Win=64800 Len=0
+  192.168.0.35  200.45.153.14 PPTP     Start-Control-Connection-Request
+  200.45.153.14 192.168.0.35  PPTP     Start-Control-Connection-Reply
+  192.168.0.35  200.45.153.14 PPTP     Outgoing-Call-Request
+  200.45.153.14 192.168.0.35  PPTP     Outgoing-Call-Reply
+  192.168.0.35  200.45.153.14 PPTP     Set-Link-Info
+  192.168.0.35  200.45.153.14 PPP LCP  Configuration Request
+  200.45.153.14 192.168.0.35  TCP      pptp > 62944 [ACK] Seq=189 Ack=349 Win=65187 Len=0
+  192.168.0.35  200.45.153.14 PPP LCP  Configuration Request
+  192.168.0.35  200.45.153.14 PPP LCP  Configuration Request
+  192.168.0.35  200.45.153.14 PPP LCP  Configuration Request
+  192.168.0.35  200.45.153.14 PPTP     Call-Clear-Request
+  192.168.0.35  200.45.153.14 PPTP     [TCP Retransmission] Call-Clear-Request
+  ...  
+  \end{alltt}
+  \caption{Error al establecer una conexión.}
+  \label{logs:error_host_to_host}
+\end{logs}
+
+\section{Conclusión}
+\label{sec:pptp_conclusion}
+
+PPTP es un protocolo que lleva muchos años funcionando en sistemas Windows, y debido a la gran cantidad de usuarios que realizaron pruebas de seguridad y rendimiento, han terminado por decantar poco a poco su utilización en entornos de producción. Aún así, se sigue utilizando en gran medida para conexiones simples de tipo host a red (entre equipos hogareños principalmente), y hasta ha sido portado a sistemas libres (o de código abierto) para su interacción con múltiples plataformas.
+
+Esto refleja que, a pesar de todos los problemas de seguridad que tenía el protocolo en la primera versión (que han sido solucionados parcialmente en la segunda versión), todavía existe una gran cantidad de usuarios móviles que se conectan a la red corporativa por PPTP mediante servidores Windows, Linux, BSD, Solaris, entre otros, sin importar la plataforma.
+
+Por esta razón es que el protocolo debía ser probado y configurado para ambos sistemas, concluyendo que lo más difícil de esta implementación ha sido la configuración del firewall de la red local y del establecimiento de un ruteo adecuado.
+
+La política de seguridad para los usuarios móviles es hoy en día un tema de gran importancia, ya que se debe evitar que al extraviar el equipo personal, la red corporativa se vea comprometida. Esto se soluciona con el uso de usuarios y contraseñas no almacenados en el sistema y evitar tener certificados que se auto conecten al servidor de la empresa. Aún así, este es un apartado importante para tener en cuenta cuando se crean las políticas de seguridad y la infraestructura de la red.
+
+Finalmente se puede recalcar que PPTP se va a seguir usando por mucho tiempo más, debido al soporte que existe en varias plataformas y a la gran cantidad de usuarios que tiene, como se ha mencionado anteriormente. Además, los equipos portátil vienen con sistemas Windows que tienen por defecto implementado el protocolo PPTP, lo hacen ideal para las empresas con empleados que viajan con frecuencia, ya que no requieren de instalar ningún software adicional.

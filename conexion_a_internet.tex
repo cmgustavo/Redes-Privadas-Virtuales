@@ -1,0 +1,696 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   |-------------------------|                        %
+%   |REDES PRIVADAS VIRTUALES |                        %
+%   |                         |                        %
+%   | Proyecto de graduación  |                        %
+%   |_________________________|                        %
+%                                                      %
+%   Autores                                            %
+%   -------                                            %
+%                                                      %
+% * Formoso Requena, Nicolás Federico (CX02-0239-8)    %
+%     nicolasformoso@gmail.com                         %
+% * Cortez, Gustavo Maximiliano (CX01-0801-9)          %
+%     cmgustavo83@gmail.com                            %
+%                                                      %
+%   Tutores                                            %
+%   -------                                            %
+%                                                      %
+% * Ing. Gustavo Vanetta - vanettag@gmail.com          %
+% * Lic. Miguel Bazzano - miguelbazzano@gmail.com      %
+%                                                      %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% *********** Capítulo: Conexión a Internet ********** %
+
+\chapter{Conexión a Internet}
+\label{chap:ConexionAInternet}
+
+La conexión a Internet es un requisito muy importante en el mundo de los negocios de hoy en día, y como era de esperar, las VPN se mueven por esos ámbitos inseguros, creando canales de datos que solo pueden entender los extremos autorizados y asegurando la información. Es por eso que para la realización de esta tesis es importante contar con una buena conexión a Internet, aunque sea con el perfil de \emph{servidor hogareño}, basta para lograr el objetivo de establecer una VPN.
+
+En este capítulo se darán a conocer los detalles de la conexión a Internet de los equipos utilizados para las pruebas que requieran una conexión real para probar una VPN. En este caso se utilizará el sistema operativo OpenBSD en el  servidor de acceso a Internet entre otros servicios adicionales.
+
+También se detallarán los parámetros de configuración del firewall y algunos aspectos a tener en cuenta para automatizar el proceso de inicio.
+
+\section{Configuración del servidor}
+\label{sec:configuracion_servidor_hogar}
+
+%REVISAR ESTOS PRIMEROS PÁRRAFOS... VAN ???
+%ME PARECE QUE NO VA, PORQUE NOSOTROS NO NECESITAMOS HABLAR DE LAS CONEXIONES EN HOGARES, SINO EN EMPRESAS.
+Hace algunos años las necesidades de comunicación en un hogar se limitaban al uso de la línea telefónica (sea fija o móvil), dejando de lado la conexión a Internet que en la mayoría de los casos, se trataban de terminales que se conectaban a la red y no se compartía el ancho de banda con otras computadoras, utilizando el limitado enlace telefónico para la transferencia de datos.
+
+Con la llegada de la banda ancha y el abaratamiento del hardware, las familias podían contar con más de una computadora personal, ya que vender la vieja PC, luego de comprar un equipo más potente, no generaba más ganancias de las que se podría aprovechar conectándola en red y compartiendo la costosa banda ancha que había en aquella época. Pero aún así, no se disponía de una PC libre para que realizara la conexión, sino que se la usaba como una terminal de trabajo más.
+
+Luego con la disminución de precios de la banda ancha y de las PC, los usuarios hogareños ya podían contar con pequeñas redes domésticas en las que compartir documentos, música, fotos y hasta la conexión a Internet por banda ancha, no resultaba muy costoso. Además, se podía disponer de la PC más vieja como ``servidor'' de Internet. Por eso es que, compartir la conexión, ya no necesitaba depender de la PC principal (o la más ``grande'' o nueva) sino que se comenzaba a pensar en una política más inteligente para ofrecer servicio continuado y seguro a toda la familia. Esto es ni más ni menos que utilizar una PC de recursos moderados para que ofrezca servicios a toda la red interna con todas las ventajas que supone un sistema libre, seguro y flexible como OpenBSD.
+
+\subsection{Planificación}
+
+A continuación se detallan los pasos que se siguieron para dejar a punto el servidor OpenBSD de cada red. Como se verá más adelante, este cumple funciones de servidor DHCP, DNS, Firewall, Conexión a Internet, entre otras cosas.
+
+Al ser las nuestras redes de no más de cinco hosts, podemos darnos el lujo de poner todos los servicios en un solo ordenador. Pero en una empresa mediana, esto es irrealizable, ya que son necesarios servidores separados de casi todas estas cosas.
+
+Los pasos para la instalación y configuración de nuestros servidores fueron: 
+
+\begin{itemize}
+	\item Instalación base de OpenBSD,
+	\item Configuración de la conexión a Internet,
+	\item Asociación de un dominio propio,
+	\item Configuración de Packet Filter (firewall),
+	\item Correo interno con SendMail,
+	\item Servidor DHCP,
+	\item Retoques en la configuración general del sistema,
+	\item Automatización del sistema de arranque,
+	\item Utilización de algunas herramientas de red y del sistema.
+\end{itemize}
+
+El orden de estos pasos es cronológico, pero en algunos casos, el punto siguiente no depende del anterior. 
+
+\subsection{Las Redes}
+
+Ambas redes utilizan el protocolo TCP/IP para la comunicación entre sus respectivos hosts, con IP versión 4 (IPv4); los rangos de direcciones ip privadas utilizados en las redes locales son: para la red 1 192.168.1.0, y para la red 2 192.168.0.0; la máscara de red en ambos casos es la misma: 255.255.255.0.
+
+En las dos redes hay solo una puerta de enlace a la red pública; dicha puerta establece una conexión PPPoE con el Proveedor de Servicios de Internet (o ISP). A través de ellas se trafican todos los paquetes entre la red pública y cada una de las redes locales, y es por donde fluirán los paquetes que pertenezcan a la conexión VPN.
+
+Cada una de las redes cuenta con un firewall a la entrada, que en el caso de la red donde se encuentra el host que hará las veces de servidor VPN, dicho firewall deberá ser configurado apropiadamente, como se ve en los capítulos \ref{chap:proto_pptp} y \ref{chap:vpn_pppsobressh}. Un resumen de este esquema en un extremo de la red se muestra en la figura \ref{fig:conexion_directa_openbsd}.
+
+\begin{figure}[htb]
+	\begin{center}
+	\includegraphics{imagenes/general/conexion_directa}
+	\caption{Esquema de conexión directa de un equipo con el servidor OpenBSD.}
+	\label{fig:conexion_directa_openbsd}
+	\end{center}
+\end{figure}
+
+El primer elemento (desde la derecha) de la figura \ref{fig:conexion_directa_openbsd} es una PC con dirección IP 192.168.0.35 que ha sido asignada por el segundo elemento (la puerta de enlace OpenBSD con dirección 192.168.0.1) previamente configurado por el administrador del sistema para brindar servicios de DHCP sobre la interfaz de red correspondiente. El siguiente elemento es el firewall, este se encarga de filtrar el tráfico no deseado que quiera ingresar a nuestra red local. Por último, el Modem ADSL realiza la conversión de interfaz que utiliza el servidor (Ethernet) hacia la línea telefónica que previamente detecta el enlace con el proveedor y obtiene un enlace WAN a través de la boca tipo RJ11 estándar de las líneas de teléfono.
+
+En la sección \ref{sec:esquema_conexion} se verá con más detalles el esquema de conexión de la red.
+
+\section{Configuración general del sistema}
+\label{sec:configuracion_general_openbsd}
+
+Suponiendo que se tiene instalado correctamente OpenBSD en el equipo servidor, solo resta configurar el sistema en general para poder realizar la conexión a Internet propiamente dicha.
+
+Luego de conectar la placa de red libre a la interfaz ethernet del modem ADSL, se tiene que configurar el archivo /etc/hostname.if, donde ``if'' se reemplaza por la interfaz de red. Por ejemplo al ejecutar el comando \emph{ifconfig} se obtiene:
+
+\begin{listing}[style=consola, numbers=none]
+lo0: flags=8049<UP,LOOPBACK,RUNNING,MULTICAST> mtu 33208
+        groups: lo
+        inet 127.0.0.1 netmask 0xff000000
+        inet6 ::1 prefixlen 128
+        inet6 fe80::1%lo0 prefixlen 64 scopeid 0x5
+rl0: flags=8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
+        lladdr 00:08:54:b2:48:b6
+        media: Ethernet autoselect (100baseTX full-duplex)
+        status: active
+        inet 192.168.0.1 netmask 0xffffff00 broadcast 192.168.0.255
+        inet6 fe80::208:54ff:feb2:48b6%rl0 prefixlen 64 scopeid 0x1
+ne1: flags=8863<UP,BROADCAST,NOTRAILERS,RUNNING,SIMPLEX,MULTICAST> mtu 1500
+        lladdr 00:c0:df:ab:2e:f1
+        media: Ethernet autoselect (10baseT full-duplex)
+        inet6 fe80::2c0:dfff:feab:2ef1%ne1 prefixlen 64 scopeid 0x2
+ne2: flags=8822<BROADCAST,NOTRAILERS,SIMPLEX,MULTICAST> mtu 1500
+        lladdr 00:c0:df:ab:0b:e9
+        media: Ethernet autoselect (10base2)
+\end{listing}
+
+La interfaz lo0 corresponde a loopback o interfaz local. Las demás interfaces son: rl0, ne1 y ne2; de las cuales, la primera se conecta al switch y tiene asignada una dirección IP (192.168.0.1); la segunda interfaz (ne1) esta conectada directamente al modem ADSL. La última no esta conectada, pero podría utilizarse  para configurar zonas DMZ.
+
+Para conectar la interfaz ne1 con el modem ADSL, en el archivo /etc/hostname.ne1 se escribe solamente:
+
+\begin{verbatim}
+up
+\end{verbatim}
+
+De esta manera se inicia la placa de red para ser utilizada con el Modem ADSL.
+
+\subsection{Configuración de PPP}
+
+Para establecer la conexión se utiliza un protocolo de comunicación punto a punto sobre ethernet (PPPoE). Básicamente, lo que hace este protocolo, implementar la capa IP sobre el protocolo PPP, que es encapsulado en una trama ethernet y transmitida al ISP a través de la línea telefónica. Logrando de esta forma, transmitir paquetes IP por una conexión serial punto a punto establecida por dos puertos ethernet.
+
+El archivo a modificar para realizar la conexión a Internet desde OpenBSD es \texttt{/etc/ppp/ppp.conf} que lleva todos los parámetros necesarios para la comunicación, incluyendo el nombre de usuario y contraseña, por lo que es muy recomendable que solamente pueda ser leído por el administrador (root). Un ejemplo de configuración se puede ver en el listado \ref{config:ppp.conf}.
+
+\begin{configuracion}
+\begin{listing}[style=configuracion]
+default:
+ set log Phase Chat LCP IPCP CCP tun command
+
+proveedor:
+ set redial 15 0
+ set reconnect 15 10000
+ set device "!/usr/sbin/pppoe -i ne1"
+ set speed sync
+ disable acfcomp protocomp
+ deny acfcomp
+ enable lqr
+ set lqrperiod 5
+ set dial
+ set login
+ set timeout 0
+ set authname "nombre@arnet_o_cualquiera-tuc-xxx"
+ set authkey "SuP3rP@sSw0rd"
+ add! default HISADDR
+\end{listing}
+\caption{Ejemplo de configuración de \texttt{ppp.conf}.}
+\label{config:ppp.conf}
+\end{configuracion}
+
+Luego para realizar la conexión se ejecuta desde la línea de comandos lo siguiente:
+
+\begin{listing}[style=consola, numbers=none]
+$ sudo ppp -ddial proveedor
+Working in ddial mode
+Using interface: tun0
+$
+\end{listing}
+
+Si al ejecutar \emph{sudo ppp -ddial proveedor} obtenemos la salida mostrada en el listado de arriba, significa que se ha creado la interfaz \emph{tun0} pero no que se haya conectado aún. Para comprobar la conexión, se puede ver en los procesos del sistema con el comando ``px ax'' y localizar que los siguientes dos procesos aparezcan:
+
+\begin{verbatim}
+28682 ??  Is      0:00.23 ppp -ddial arnet
+25835 ??  I       0:00.08 /usr/sbin/pppoe -i ne1
+\end{verbatim}
+
+Y para saber la dirección IP que ha asignado el proveedor, al ejecutar ``ifconfig'' nuevamente, se puede ver el nuevo dispositivo túnel tun0 que ha creado PPP:
+
+\begin{verbatim}
+tun0: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1492
+        groups: tun egress
+        inet 190.137.64.32 --> 200.3.60.15 netmask 0xffffffff
+\end{verbatim}
+
+De esta manera, se asegura que la conexión a Internet se ha establecido y que la dirección IP asignada por el proveedor es \emph{190.137.64.32}. En la última línea del archivo \texttt{ppp.conf} vemos que luego de establecer la conexión con el proveedor, se agregó la ruta por defecto a la dirección del gateway del proveedor:
+
+\begin{listing}[style=consola, numbers=none]
+# route show -inet
+Routing tables
+
+Internet:
+Destination        Gateway            Flags    Refs      Use    Mtu  Interface
+default            200.3.60.15        UGS         2    11740      -   tun0
+loopback           localhost          UGRS        0        0  33208   lo0
+localhost          localhost          UH          1      120  33208   lo0
+192.168.0/24       link#1             UC          2        0      -   rl0
+superhijitus       00:08:54:b2:48:b6  UHLc        1      466      -   lo0
+192.168.0.35       00:1e:90:22:26:1c  UHLc        1   166475      -   rl0
+200.3.60.15        host32.190-137-64. UH          1        0   1492   tun0
+BASE-ADDRESS.MCAST localhost          URS         0        0  33208   lo0
+\end{listing}
+
+Si en este momento se intenta obtener respuesta de algún dominio (por ejemplo con el comando ``ping google.com''), no se obtendrá respuesta alguna, pues todavía se configuró el servidor DNS. OpenBSD se instala con un servidor de DNS preconfigurado y casi listo para usar con direcciones de Internet, se lo puede iniciar con el comando ``named'' y editar el archivo \emph{/etc/resolv.conf} como se indica en el listado \ref{config:resolv.conf}.
+
+\begin{configuracion}
+\begin{listing}[style=configuracion]
+lookup file bind
+search red.lan
+nameserver 192.168.0.1
+nameserver 200.45.191.35
+\end{listing}
+\caption{Servidor de nombre en \texttt{/etc/resolv.conf}.}
+\label{config:resolv.conf}
+\end{configuracion}
+
+La primera línea (lookup) especifica dónde buscar para resolver nombres. En este caso, busca primero en el archivo \texttt{/etc/hosts} y si no lo encuentra allí, utiliza el servidor DNS local y luego el remoto. A veces es buena práctica agregar el DNS del proveedor por si aún no se ha ejecutado o configurado Bind en el sistema.
+
+Luego de esto, es posible acceder a Internet desde el servidor, pero aún los demás equipos de la red no pueden hacerlo.
+
+\subsection{Permitir el acceso a Internet}
+
+Para permitir el acceso a Internet de los demás equipos de la red, a través del servidor OpenBSD, se deben habilitar algunos parámetros del kernel; esto se hace con el archivo ``/etc/sysctl.conf''. Algunas líneas de este archivo se muestran en el listado \ref{config:sysctl.conf}.
+
+\begin{configuracion}
+\begin{listing}[style=configuracion]
+#       $OpenBSD: sysctl.conf,v 1.46 2008/01/05 18:38:37 mbalmer Exp $
+#
+# This file contains a list of sysctl options the user wants set at
+# boot time.  See sysctl(3) and sysctl(8) for more information on
+# the many available variables.
+#
+net.inet.ip.forwarding=1        # 1=Permit forwarding (routing) of IPv4 packets
+#net.inet.ip.mforwarding=1      # 1=Permit forwarding (routing) of IPv4 multicast packets
+#net.inet.ip.multipath=1        # 1=Enable IP multipath routing
+net.inet6.ip6.forwarding=1      # 1=Permit forwarding (routing) of IPv6 packets
+#net.inet6.ip6.mforwarding=1    # 1=Permit forwarding (routing) of IPv6 multicast packets
+#net.inet6.ip6.multipath=1      # 1=Enable IPv6 multipath routing
+#net.inet6.ip6.accept_rtadv=1   # 1=Permit IPv6 autoconf (forwarding must be 0)
+#net.inet.tcp.rfc1323=0         # 0=Disable TCP RFC1323 extensions (for if tcp is slow)
+#net.inet.tcp.rfc3390=0         # 0=Disable RFC3390 for TCP window increasing
+net.inet.esp.enable=1           # 0=Disable the ESP IPsec protocol
+net.inet.ah.enable=1            # 0=Disable the AH IPsec protocol
+\end{listing}
+\caption{Algunas líneas de \texttt{/etc/sysctl.conf}.}
+\label{config:sysctl.conf}
+\end{configuracion}
+
+Tal como se muestra en el listado anterior, las líneas descomentadas (las que no tienen el símbolo \#) son las que lee el kernel para habilitar (si tiene un 1) o deshabilitar (si tiene un 0) al inicio del sistema.
+
+Luego se debe activar el firewall Packet Filter del OpenBSD, en el archivo ``/etc/rc.conf'' para que se ejecute en el inicio del sistema. También se pueden habilitar otros servicios útiles tal como Bind. Una parte de este archivo de configuración aparece en el listado \ref{config:rc.conf}.
+
+\begin{configuracion}
+\begin{listing}[style=configuracion]
+#!/bin/sh -
+#
+#       $OpenBSD: rc.conf,v 1.128 2008/01/31 14:18:03 reyk Exp $
+
+# set these to "NO" to turn them off.  otherwise, they're used as flags
+sshd_flags=""           # for normal use: ""
+named_flags=""          # for normal use: ""
+
+# set the following to "YES" to turn them on
+pf=YES                  # Packet filter / NAT
+ipsec=YES               # IPsec
+portmap=NO              # Note: inetd(8) rpc services need portmap too
+inetd=YES               # almost always needed
+check_quotas=YES        # NO may be desirable in some YP environments
+accounting=NO           # process accounting (using /var/account/acct)
+\end{listing}
+\caption{Algunas líneas de \texttt{/etc/rc.conf}.}
+\label{config:rc.conf}
+\end{configuracion}
+
+Sólo resta configurar el PF para que realice las operaciones de NAT (traducción de direcciones de red), esto, para que los equipos de la red local puedan acceder a Internet con la IP pública asignada por el proveedor. Lo que se verá con más detalles en la sección~\ref{sec:ReglasFiltradoOpenBSD}.
+
+\section{Reglas de filtrado}
+\label{sec:ReglasFiltradoOpenBSD}
+
+A partir de la versión 3.0 de OpenBSD, luego de una disputa en la licencia utilizada en la implementación del firewall, se comenzó el desarrollo de un nuevo software para que realizara las mismas y otras funciones más que el anterior. A esta implementación se la ha denominado Packet Filter (abreviado como PF). 
+  
+PF es el programa que maneja un conjunto de instrucciones a nivel de kernel, que permite la gestión del tráfico entrante y saliente del sistema. Además realiza funciones de filtrado del tráfico TCP/IP, NAT, control de ancho de banda y priorización de paquetes, entre otras cosas.
+
+\subsection{Funcionamiento básico}
+
+Cuando se habilita el sistema de filtrado de PF \textendash sea al arranque o manualmente\textendash\hspace{0.01cm} se carga el archivo ``/etc/pf.conf'', donde se configuraron las directivas del firewall, entre otras cosas. Este archivo es leído y se carga en orden secuencial, de modo que existe dependencia entre las reglas. Dicho archivo consta de siete partes, y sigue un orden predeterminado como se enumera aquí: 
+
+\begin{enumerate}
+	\item \textbf{Macros}: son las variables definidas por el usuario que pueden contener direcciones IP, nombres de hosts, interfaces de red, etc.
+	\item \textbf{Tablas}: es una estructura que se usa para definir un conjunto de direcciones IP y puertos.  
+	\item \textbf{Opciones}: son las opciones para el funcionamiento de PF.  
+	\item \textbf{Normalización (Scrub)}: realiza el reprocesamiento de paquetes para su normalización y defragmentación.  
+	\item \textbf{Formación de colas}: para proporcionar control de ancho de banda y priorización de paquetes.  
+	\item \textbf{Traducción de direcciones}: controla la traducción de direcciones de red (NAT) y el redireccionamiento de paquetes.  
+	\item \textbf{Reglas de filtrado}: permite el filtrado selectivo o el bloqueo de paquetes según van pasando por las interfaces de red definidas. 
+\end{enumerate}
+  
+Durante el procesamiento del archivo de PF es importante la ubicación de las sentencias de bloqueo y apertura de puertos y protocolos, ya que si la línea que bloquea los puertos se encuentra después de la línea que abre un conjunto de puertos determinados, PF entenderá que la sentencia posterior es la que vale y anula la anterior, provocando un funcionamiento diferente al esperado (se supone abrir los puertos definidos). Por esto, a excepción de los macros y tablas, el archivo debe mantener el orden de los pasos anteriores. También se puede obviar algún punto para una aplicación específica.
+
+\subsubsection*{Anchors}
+
+Una de tantas otras características que posee este firewall, es un concepto que se denomina \emph{anchor}. 
+
+Un anchor es un contenedor dentro del cual se pueden agregar y quitar reglas de filtrado \emph{on the fly}, es decir, en tiempo de ejecución. Con ellos, Se puede por ejemplo, agregar un conjunto de restricciones sin tener que recargar el PF completo.
+
+Packet Filter da la posibilidad de anidar anchors, pudiendo luego ser invocados con la misma notación que se utiliza en el filesystem de unix: separando los nombres de los anchors (de mayor a menor nivel) con una barra `/'.
+
+Si se encuentra que un paquete corresponde con una regla que está marcada con la opción \emph{quik}, dentro de un anchor, no se continúa con las reglas subsiguientes, sino que se termina la evaluación.
+
+Un ejemplo de la utilización de anchors, puede verse en la sección~\ref{sec:isakmpd_fw}.
+
+\subsection{Configuración de Packet Filter}
+
+Ahora un ejemplo de configuración de Packet Filter para dejar salir a Internet a los equipos de una red local, se puede ver en el listado \ref{config:pf.conf_conexion_internet}.
+
+\begin{configuracion}
+\begin{listing}[style=configuracion]
+# Interfaces de red
+ext_if="tun0"
+int_if="rl0"
+
+# Politicas
+set block-policy return
+set loginterface $ext_if
+
+# Normalizacion
+scrub in all
+
+# Ruteo, NAT y redireccionamiento
+nat on $ext_if from $int_if:network to any -> ($ext_if)
+
+# Reglas de filtrado
+block all
+pass quick on $int_if all
+pass quick on lo0 all
+
+# Permite el trafico desde la red interna
+pass in  on $int_if from $int_if:network to any keep state
+pass out on $int_if from any to $int_if:network keep state
+
+# Permite salida de paquetes tcp, udp, icmp
+pass out on $ext_if proto tcp all modulate state flags S/SA
+pass out on $ext_if proto { udp, icmp } all keep state
+
+# Responde a ICMP
+pass in on $ext_if proto icmp all keep state
+\end{listing}
+\caption{Reglas de PF para permitir conexión a Internet.}
+\label{config:pf.conf_conexion_internet}
+\end{configuracion}
+
+La interfaz interna (int\_if) no es más que la placa de red que ha detectado el sistema durante el arranque y está conectada a la red local. En este caso se le ha asignado el nombre ``rl0''; este varía de acuerdo al tipo de placa que se utilice (por ejemplo, para placas NE2000 o compatibles, se le asigna el dispositivo ``ne0'', ``ne1'' y así sucesivamente).
+
+Una vez cargados, estos parámetros de configuración permiten la navegación libre por Internet, con todos los puertos del servidor bloqueados. Para recargar las directivas del PF, ejecutamos lo siguiente: \emph{pfctl -f /etc/pf.conf}.
+
+El firewall crea una interfaz para monitorear su funcionamiento, se la puede ver con el comando \emph{ifconfig}:
+
+\begin{listing}[style=consola, numbers=none]
+pflog0: flags=141<UP,RUNNING,PROMISC> mtu 33208
+        groups: pflog
+\end{listing}
+
+Por ejemplo, para monitorear los mensajes que envía PF ejecutamos el comando ``tcpdump -i pflog0''. 
+
+\section{Esquema de conexión}
+\label{sec:esquema_conexion}
+
+Para dar acceso a Internet a una pequeña red local hogareña, se utiliza un equipo con funciones de ruteo y firewall, cuyo esquema general se puede resumir en la figura \ref{fig:esquema_net_serv}.
+
+\begin{figure}[htb]
+	\begin{center}
+	\includegraphics{imagenes/host-host/esquema_net_serv}
+	\caption{Esquema de la red donde está el servidor con OpenBSD.}
+	\label{fig:esquema_net_serv}
+	\end{center}
+\end{figure}
+
+Para conocer detalles de los hosts, véase el Apéndice \ref{appendix:equipos_de_prueba}. El equipo servidor de uno de los extremos de la conexión, funciona bajo OpenBSD y tiene instaladas tres placas de red; una de ellas se conecta a la interfaz Ethernet del Modem/Router ADSL. Esta última, y la interfaz WAN de dicho router están configuradas como bridge; la otra se conecta con el Switch. Y la tercera se reserva para configurar zonas DMZ \footnote{Siglas de demilitarized zone o zona desmilitarizada.}.
+
+%El Firewall también realiza funciones de ruteo, de NAT (???, me parece que esto no es así)
+El Firewall también realiza funciones de NAT (Network Address Translation), necesario para compartir el acceso a Internet con todos los hosts de la red local; el servidor también brinda servicios de DHCP, para la asignación dinámica de direcciones. Además se ha configurado un conjunto de reglas de filtrado para determinados puertos, direcciones IP y MAC, para evitar el uso del firewall cuando se realicen transferencias de datos dentro de la red local.
+  
+En este caso, como se trata de una red hogareña, se permite el libre acceso hacia Internet, pero para establecer un nivel de seguridad adecuado, se bloquea cualquier conexión proveniente de Internet que no haya sido solicitada por un equipo que pertenezca a la red local.
+
+En la figura \ref{fig:conexion_detallada_openbsd} se pueden ver con más detalles de los elementos que participan en la conexión a Internet, y también los dos PCs que comparten el acceso. Las mismas están conectadas a un switch que se encarga de ``repartir'' los datos entre los emisores y receptores de la red.
+
+\begin{figure}[htb]
+	\begin{center}
+	\includegraphics{imagenes/general/conexion_detallada}
+	\caption{Esquema de conexión detallada de varios equipos de escritorio con el servidor OpenBSD.}
+	\label{fig:conexion_detallada_openbsd}
+	\end{center}
+\end{figure}
+
+En la figura \ref{fig:conexion_detallada_openbsd}, puede verse un esquema detallado de una de nuestras redes locales, conectada a Internet, a través del proveedor de servicios.
+%También se puede ver en la figura \ref{fig:conexion_detallada_openbsd}, que luego de llegar el cable al poste telefónico, este sale del troncal local y va a las oficinas de comunicación, que a su vez lo transmiten con el proveedor de servicios (en nuestro caso es Telecom).
+
+\section{Automatización del sistema}
+\label{sec:automatizacion_conexion}
+
+En esta sección se detallarán los pasos necesarios para realizar una conexión a Internet automatizada; con todos los servicios que se brindarán sin necesidad de interacción con el terminal del servidor. Es decir, cuando se encienda el equipo se ``levantarán'' automáticamente los servicios correspondientes y la conexión a Internet.
+
+También se mostrará la manera de mantener un dominio asociado a la dirección IP asignada por el proveedor con el fin de facilitar la conexión necesaria entre los servidores de nuestras redes locales.
+
+\subsection{Conexión a Internet}
+
+Para que no sea necesario acceder al servidor cada vez que se quiera conectar a Internet, sino que, con solo encender el equipo se efectúe dicha conexión de forma automática, se deben crear y/o modificar algunos archivos de configuración.
+
+En primer lugar el archivo ``/etc/rc.local'' contiene los \emph{scripts} que se ejecutan en el arranque del sistema, después de los servicios como Bind, DHCP, etc. En el listado de Configuración \ref{config:conexion_internet_rc.local} se puede ver una sección que permite la conexión a Internet mediante la ejecución del comando ``ppp -ddial proveedor'' y en el que espera unos segundos antes de ejecutar el comando que comprueba si la conexión se ha establecido o no.
+
+\begin{configuracion}
+\begin{listing}[style=configuracion]
+echo -n 'Estableciendo PPPoE DSL: '; ppp -ddial proveedor
+echo -n 'Estableciendo conexion: '
+for i in 10 9 8 7 6 5 4 3 2 1 0; do
+    sleep 3
+    echo -n "$i"
+    if /usr/local/sbin/adsl-status > /dev/null; then
+        break
+    fi
+done
+echo -n '\nEstado: '; /usr/local/sbin/adsl-status
+\end{listing}
+\caption{Script para el inicio automático de la conexión a Internet.}
+\label{config:conexion_internet_rc.local}
+\end{configuracion}
+
+Lo que hace el script \ref{config:conexion_internet_rc.local} es llamar al comando ppp para que se conecte con ``proveedor'' definido en /etc/ppp/ppp.conf y esperar unos segundos (sleep) por diez veces, hasta que otro script (adsl-status) devuelva verdadero, es decir que devuelva la dirección IP asignada por el proveedor. A este último script se lo debe crear y darle permisos de ejecución:
+
+\begin{listing}[style=consola, numbers=none]
+$ sudo touch /usr/local/sbin/adsl-status
+$ sudo chmod +x /usr/local/sbin/adsl-status
+$
+\end{listing}
+
+Luego se lo edita como aparece en el listado de Configuración \ref{config:adsl-status}.
+
+\begin{configuracion}
+\begin{listing}[style=configuracion]
+#!/bin/sh
+
+IP=$(/sbin/ifconfig tun0 | awk '/netmask/{print $2}')
+
+if [ -z "$IP" ]; then
+   echo "Enlace ADSL no esta conectado."
+   exit 1
+else
+   echo "ADSL conectado, Direccion IP $IP"
+   exit 0
+fi
+\end{listing}
+\caption{Script para obtener la dirección IP que asigna el proveedor.}
+\label{config:adsl-status}
+\end{configuracion}
+
+De esta manera, cada vez que arranque el sistema, se iniciarán los servicios por defecto (como SSH, Inetd, etc.), junto a los servicios que se han indicado manualmente para que se iniciaran como Packet Filter y el script de conexión a Internet.
+
+Aunque en realidad OpenBSD ejecuta automáticamente todos los comandos que se introduzcan en ``/etc/rc.local'', por eso se debe que tener especial cuidado al editar el archivo, sino pueden ocurrir errores al inicio y si no se monitorea el arranque para ver los mensajes del sistema, sería difícil conocer el error que se produzca. Por eso es recomendable al principio monitorear todos los mensajes de arranque del sistema.
+
+\subsection{Asociando un nombre de dominio}
+
+En primer lugar es necesario tener un dominio registrado en \href{http://www.nic.ar}, cuyos pasos se pueden resumir como sigue:
+
+\begin{enumerate}
+	\item Registrar persona,
+	\item Registrar entidad,
+	\item Registrar dominio.
+\end{enumerate}
+
+El trámite a veces es un poco largo, pero lo más importante a la hora de registrar el dominio, es ya que se deben agregar como servidores DNS a los que provee el servicio de DNS gratuito para asociar la IP al dominio. De los servicios más conocidos se pueden encontrar a:
+
+\begin{itemize}
+	\item Zoneedit,
+	\item DnsExit,
+	\item Entre otros.
+\end{itemize}
+
+El que se va a utilizar para esta tesis es Zoneedit, que es gratuito y permite asociar hasta 5 dominios sin costo. Luego del registro, se debe indicar nombre de dominio inicial, y a continuación se obtiene los DNS necesarios para ingresarlos en nic.ar.
+
+\subsection{Actualización de la dirección IP}
+
+Para actualizar el dominio a la dirección IP que asigna el proveedor existen varios métodos que se pueden utilizar con Linux u OpenBSD. Los más sencillos son usando la línea de comandos, con los programas Lynx o Wget con las siguientes sintaxis:
+
+\begin{listing}[style=consola, numbers=none]
+# lynx -source -auth=username:password 'http://dynamic.zoneedit.com/auth/dynamic.html?host=www.mydomain.com'
+# wget -O - --http-user=username --http-passwd=password 'http://dynamic.zoneedit.com/auth/dynamic.html?host=www.mydomain.com'
+#
+\end{listing}
+
+Como OpenBSD no viene con wget de serie y para no instalar ningún programa adicional, es mejor usar Lynx (que por cierto, no es mucho problema). A ejecutar algún comando anterior, se debería obtener el mensaje de que ha sido actualizado el dominio a la dirección IP que ha asignado el proveedor al equipo servidor.
+
+Como se quiere automatizar todo el proceso, lo mejor es instalar el paquete \emph{ddclient} mediante el comando (suponiendo que se utiliza los repositorios de Argentina):
+
+\begin{listing}[style=consola, numbers=none]
+# sudo pkg_add -v http://openbsd.md5.com.ar/pub/OpenBSD/4.3/packages/i386/ddclient-3.7.2.tgz
+\end{listing}
+
+Luego de la instalación, se crea el directorio y archivo de configuración en /etc/ddclient. Para terminar la configuración se tiene que modificar, con los datos de la cuenta en Zoneedit, el archivo \texttt{ddclient.conf} que debe contener como mínimo lo que se muestra en el listado de Configuración \ref{config:zoneedit}.
+
+\begin{configuracion}
+\begin{listing}[style=configuracion]
+daemon=300                            # check every 300 seconds
+syslog=yes                            # log update msgs to syslog
+mail=gustavo                          # mail all msgs to root
+mail-failure=gustavo                  # mail failed update msgs to root
+pid=/var/run/ddclient.pid             # record PID in file.
+ssl=yes                               # use ssl-support.Works with ssl-library
+use=web                               # via web
+##
+## ZoneEdit (zoneedit.com)
+##
+server=www.zoneedit.com,     \
+protocol=zoneedit1,          \
+login=nomre_cuenta,          \
+password=SuP3rS3cr3tP@sS     \
+nombrededominio.com.ar
+\end{listing}
+\caption{Resumen de configuración para ZoneEdit.}
+\label{config:zoneedit}
+\end{configuracion}
+
+Ahora es necesario ejecutar ddclient y probar su funcionamiento. Los parámetros que utiliza son muy sencillos, pero si ya se ha editado el archivo de configuración, no harán falta parámetros adicionales, pero por ejemplo para ejecutarlo como ``daemon'', que envíe información a Syslog y cualquier otra información a una cuenta de correo local, se debería ejecutar ddclient con los siguientes argumentos:
+
+\begin{listing}[style=consola, numbers=none]
+# ddclient -daemon=0 -syslog -quiet retry -mail gustavo
+\end{listing}
+
+De otra manera, con solo ejecutar ``ddclient'' sin argumentos, se debería ver un proceso similar a este:
+
+\begin{verbatim}
+8776 C0- I       2:49.43 perl: ddclient - sleeping for 280 seconds (perl)
+\end{verbatim}
+
+Como se había indicado en el archivo de configuración, ddclient se ejecuta (en busca de cambios en la dirección IP) cada 300 segundos. Además para saber que el dominio se ha actualizado, ddclient envía un mensaje al usuario designado con la información siguiente (por ejemplo):
+
+\begin{verbatim}
+SUCCESS:  updating nombrededominio.com.ar: IP address set to 190.226.158.2 
+(200: Update succeeded.)
+regards,
+   ddclient@superhijitus.red.lan (version 3.7.1)
+\end{verbatim}
+
+Si ocurre algún error, también se notifica por correo. Además OpenBSD envía información diaria del estado del sistema, si se han modificado archivos de configuraciones, el promedio de uso del equipo, y otra información con respecto al uso del disco rígido y sus particiones. Por esta razón es importante tener bien configurado Sendmail al menos para usuarios locales.
+
+En cuanto a \texttt{ddclient}, se lo puede agregar al archivo /etc/rc.local para que inicie automáticamente con el sistema, pero antes se debe tener en cuenta de estar conectado a Internet, por eso se lo ejecuta posteriormente al script de conexión, agregando la línea a continuación:
+
+\begin{verbatim}
+echo -n 'Estableciendo dominios... '; 
+/usr/local/sbin/ddclient -file /etc/ddclient/ddclient.conf
+\end{verbatim}
+
+\subsection{Utilidades de un dominio propio}
+
+El interés de tener un dominio asociado a la dirección IP que es asignada por el proveedor, puede provenir de que se quiera alojar un servidor Web, por ejemplo, para poder acceder a él desde otro sitio físico. También puede resultar importante para establecer una conexión por SSH para realizar tareas administrativas.
+
+En el caso de las VPN, para establecer una conexión entre dos redes a través de Internet, el hecho de tener un nombre de dominio asociado a nuestra dirección IP resulta útil, ya que para establecer la conexión debemos conocer dicha dirección. Asociar un nombre a una dirección IP resulta también muy económico para las empresas que no puedan afrontar los costos de una solución VPN comercial ni de direcciones IP fijas; pero a su vez es peligroso, debido a que se corre el riesgo de perder la conexión, cuando el nombre de dominio no esté apuntando a la dirección IP correcta.
+
+\section{Configuración de los clientes}
+\label{sec:configuracion_clientes_openbsd}
+
+Hasta ahora solamente se ha hablado de establecer la conexión a Internet con el servidor OpenBSD y que permite la conexión de los clientes a Internet a través de la puerta de enlace del mismo.
+
+Pero si la configuración en los clientes no se ha realizado adecuadamente es posible que nunca se pueda conectar a Internet desde un terminal. Por esto, hay que configurar a los clientes para que tengan dirección IP fija y que pertenezcan a la red del servidor (por ejemplo a la red 192.168.0.0). Además su puerta de enlace debe apuntar a la dirección IP de servidor y los DNS pueden ser del servidor local (si es que se brinda dicho servicio) o del proveedor.
+
+Si se tienen varios equipos terminales, con diferentes sistemas operativos, la mejor solución es configurar un servidor \emph{DHCP} en el servidor, para evitar asignar direcciones IP manualmente a cada computadora. En BSD el cliente de DHCP se denomina \emph{dhclient} y se puede configurar para iniciar en el arranque. En Linux y Windows también se tiene por defecto un cliente DHCP, por lo que en la mayoría de los casos no se requiere ninguna configuración manual.
+
+\subsection{Servidor DHCP}
+
+Un servidor DHCP permite asignar automáticamente direcciones IP de determinado rango a los terminales clientes (equipos de la red local). Esta funcionalidad permite ahorrar mucho tiempo y esfuerzo en lo que sería configurar manualmente direcciones IP y Gateway en cada equipo nuevo que se una a la red.
+
+Para que el servicio se inicie durante el arranque del sistema, se tiene que cambiar el parámetro ``NO'' por lo siguiente:
+
+\begin{verbatim}
+dhcpd_flags=""
+\end{verbatim}
+
+Luego se tiene que editar la configuración del servidor DHCP donde se indica el rango de direcciones IP y los servidores de nombre (DNS) que se les va a transmitir utilizar a los usuarios. El primer archivo es el ``/etc/dhcpd.conf'' que debería contener lo siguiente (por ejemplo) lo que se muestra en el listado de Configuración \ref{config:dhcp1}.
+
+\begin{configuracion}
+\begin{listing}[style=configuracion]
+shared-network LOCAL-NET {
+        option  domain-name "red.lan";
+        option  domain-name-servers 192.168.0.1;
+
+        subnet 192.168.0.0 netmask 255.255.255.0 {
+                option routers 192.168.0.1;
+
+                range 192.168.0.32 192.168.0.127;
+        }
+
+}
+\end{listing}
+\caption{Ejemplo de configuración de un servidor DHCP.}
+\label{config:dhcp1}
+\end{configuracion}
+
+El otro archivo de configuración es donde se indica la interfaz por la que ``entrarán'' los cliente a solicitar la información de la red. Este archivo es ``/etc/dhcpd.interfaces'' y por ejemplo puede contener solamente el dispositivo de red que este conectado al switch:
+
+\begin{verbatim}
+rl0
+\end{verbatim}
+
+De esta manera se tiene configurado un servidor DHCP para que acepte conexiones a través de la red local (interfaz rl0) y asigne un rango de direcciones IP que van de 192.168.0.32 a 192.168.0.127, lo cual permite a 95 clientes simultáneamente. Los clientes solo deben saber que tienen que buscar un servidor DHCP.
+
+\subsection{Finalizando la configuración}
+
+Ahora que se tiene un sistema robusto, seguro y muy flexible en cuanto a la configuración del mismo, se puede proceder a realizar unos retoques finales en algunos parámetros de configuración.
+
+Para listar los servicios que se están ejecutando en el sistema se utiliza el comando ``ps ax'', que puede generar una salida como la siguiente:
+
+\begin{listing}[style=consola, numbers=none]
+$ ps ax
+  PID TT  STAT       TIME COMMAND
+    1 ??  Is      0:00.06 /sbin/init
+20075 ??  Is      0:01.72 syslogd: [priv] (syslogd)
+11440 ??  I       0:07.20 syslogd -a /var/named/dev/log -a /var/empty/dev/log
+23321 ??  Is      0:00.05 pflogd: [priv] (pflogd)
+ 4388 ??  I       0:19.11 pflogd: [running] -s 116 -i pflog0 -f /var/log/pflog (pflog
+ 2601 ??  Is      0:00.03 named: [priv] (named)
+23128 ??  I       1:15.80 named
+23920 ??  Is      0:00.11 /usr/sbin/dhcpd rl0
+32432 ??  Is      0:00.23 inetd
+ 5577 ??  Is      0:00.07 /usr/sbin/sshd
+14417 ??  Is      0:29.58 sendmail: accepting connections (sendmail)
+20139 ??  Is      0:01.32 cron
+10485 ??  Is      0:07.62 sshd: gustavo [priv] (sshd)
+32341 ??  I       0:31.25 sshd: gustavo@ttyp0 (sshd)
+28682 ??  Is      7:23.01 ppp -ddial arnet
+25835 ??  I       2:19.97 /usr/sbin/pppoe -i ne1
+ 9284 ??  Is      0:00.01 /usr/local/bin/svnserve -d --listen-host 192.168.0.1 -r /va
+24124 ??  Is      0:00.12 /usr/local/bin/svnserve -d --listen-host 190.137.64.32 -r /
+28303 p0  Is      0:00.96 -ksh (ksh)
+14206 p0  R+      0:00.00 ps -ax
+ 8776 C0- I       2:55.17 perl: ddclient - sleeping for 50 seconds (perl)
+22579 C0  Is+     0:00.06 /usr/libexec/getty std.9600 ttyC0
+$
+\end{listing}
+
+En el listado anterior se pueden ver los servicios que se han configurado para iniciar junto a los argumentos con que se ejecutan. También se pueden ver otros servicios como los dos servidores de Subversion (Sección \ref{appendix:doc_control_versiones} de la página \pageref{appendix:doc_control_versiones}) e Inetd.
+
+El servicio Inetd es un conjunto de servicios que se inician de acuerdo a la demanda o solicitud de un servicio determinado. En muchos casos es conveniente desactivar estos servicios para no abrir puerto innecesarios, ya que los servicios básicos que ofrece (como ftp, finger, ident, pop3, daytime, entre otros) trabajan en texto claro, en el que por ejemplo el servicio POP3 que utiliza autenticación para funcionar, envía los datos de usuarios sin encriptar, de manera que con un simple sniffer de paquetes se pueden obtener nombres de usuarios y contraseñas en texto claro. 
+
+Si por otro motivo se requiere utilizar alguno de estos servicios, los datos de los mismos se encuentran en /etc/inetd.conf y para habilitarlos basta con quitar el comentario de una línea o comentarla para deshabilitar el servicio. 
+
+Por otro lado, las conexiones de terminales se pueden limitar a solamente una terminal virtual, de manera que se libera memoria innecesaria (para administrar el sistema, pocas veces se puede llegar a usar más de un terminal). El archivo de terminales se encuentre en /etc/ttys, y solo es necesario que cambiar el valor ``on'' por el valor ``off'':
+
+\begin{verbatim}
+console "/usr/libexec/getty std.9600"   vt220   off secure
+ttyC0   "/usr/libexec/getty std.9600"   vt220   on  secure
+ttyC1   "/usr/libexec/getty std.9600"   vt220   off secure
+\end{verbatim}
+
+Para mejorar la seguridad del sistema, se puede quitar la contraseña del usuario \emph{root} para evitar cualquier intrusión o intento de hacking a esta cuenta. Para esto, se debe suponer que un usuario normal pueda tener permisos de ejecución del comando ``sudo'' para poder realizar las operaciones de administración del sistema. Para agregar un usuario al grupo \emph{wheel} (para poder ejecutar ``sudo''), es necesario el comando ``gpasswd -a <usuario> wheel''. Además es necesario asegurar de que al ejecutar \texttt{visudo} para editar el archivo de configuración de sudo, éste contenga la línea:
+
+\begin{verbatim}
+%wheel  ALL=(ALL) SETENV: ALL
+\end{verbatim}
+
+Y luego quitar la contraseña de root, eliminando la cadena de texto \emph{extraño} del archivo \texttt{master.passwd} de manera que quede como sigue:
+
+\begin{verbatim}
+root::0:0:daemon:0:0:Root &:/root:/bin/ksh
+\end{verbatim}
+
+De esta manera, nadie va a poder ingresar como \emph{root}. Pero a pesar de que esto puede suponer una mejora para la seguridad del sistema, por otro lado se debe tener en cuenta que el usuario del sistema con permisos en el grupo wheel, no puede tener una contraseña débil, ya que puede ser descifrada y utilizada como si del usuario \emph{root} se tratara (ya que en la configuración de \texttt{visudo} se ha especificado que el usuario que pertenezca a \emph{wheel} pueda ejecutar cualquier comando como administrador). Otra manera de asegurar el sistema sería especificar que los usuarios \emph{wheel} solo tengan permiso de administrar determinados archivos y entornos, que también se consigue editando la configuración con \texttt{visudo}.
+
+\section{Recursos utilizados}
+\label{sec:conexion_internet_recursos}
+
+En esta sección se describen los aspectos superficiales y económicos de los componentes utilizados para la conexión a Internet de la red local. Para más detalles en la descripción de equipos de toda la VPN, ver el Apéndice \ref{appendix:equipos_de_prueba}.
+
+\subsection{Servidor}
+
+El servidor debe ser una máquina medianamente potente y en buen funcionamiento. Debe tener su gabinete en buenas condiciones y con los ventiladores correspondientes y en buen estado. Es importante mantener estas características, ya que el equipo debe estar encendido siempre, por lo que la refrigeración es punto clave para mantener un buen servicio y funcionamiento del servidor, además de alargar la usabilidad del mismo. Si no se dispone de un PC para el servidor, hoy en día existe la posibilidad de comprar equipos de marca muy económicos, con respecto a la utilidad que se le dará.
+
+\subsection{Modem ADSL y Switch}
+
+El modem ADSL y Switch son componentes que hay que elegirlos en cajas cerradas, ya que no se pueden ``fabricar'', pero se deben tener muy en cuenta de la calidad de lo que se adquiere.
+
+En cuanto al modem ADSL, debe contar con una interfaz Ethernet para conectar la placa de red del servidor, que en general son más costoso que los modem con solo puerto USB. El precio de estos dispositivos no superan los 200 pesos, cumpliendo la única función de ``bridge'' entre la interfaz Ethernet y la línea telefónica.
+
+El switch también es un elemento muy común usado en redes de cualquier tamaño y se pueden conseguir a un precio muy económico.
+
+\subsection{Cableado}
+
+El cableado es un componente importante que afecta en el rendimiento de la red. Muchas veces la deficiente comunicación entre hosts se debe a una mala instalación de los cables de red. Para ver que la velocidad de conexión es adecuada, basta con una simple transmisión de archivos entre las terminales. Si se trata de una red a 100 Mbps, la velocidad teórica a alcanzar debería ser de 12,5MB/s, aunque si se alcanza un 75 o 90 por ciento está muy bien también.
+
+Hoy en día, como todos los switch soportan las normas de cableado 568-B (normal) y 568-A (cruzado), lo más conveniente es armar directamente cables cruzados, por si alguna vez deja de funcionar el switch o se necesita hacer pruebas conectando solo dos hosts.
+
+La categoría del cable a utilizar también es importante, y actualmente es fácil conseguir Cat-5e a precios razonables (menos de 2 pesos el metro).
+
+\section{Conclusión}
+\label{sec:conexion_conclusion}
+
+Hoy en día la conexión a Internet es un requisito casi imprescindible para el funcionamiento y crecimiento de una empresa. Por esta razón es que se ha dedicado todo un capítulo a la configuración de la misma.
+
+Si bien se podrían haber planteado alternativas para la conexión a Internet, se considera que la mejor solución es dedicar un equipo completo que realizara tal función, ya que permite la flexibilidad de configuración del sistema, el considerable aumento de la seguridad al tener firewall robustos y la posibilidad de incluir servicios adicionales como servicios de direcciones IP dinámicas, asignación automática de dirección IP local, administración remota, entre otros.
+
+Además los bajos requisitos de los equipos hacen muy económica su adquisición, ya que no requiere potencia en gráficos, ni grandes cantidades de espacio de almacenamiento. Pero lo más importante y a veces costoso se refiere al mantenimiento de los equipos, ya que si se mantiene la conexión las 24 horas al día, el equipo levanta temperatura, y puede dañar los componentes. Por eso la importancia de tener una buena refrigeración.
+
+En cuanto a los sistemas operativos que pueden instalarse en los equipos, se cuenta con una gran variedad (entre Linux, BSD, Solaris, etc.), pero se ha elegido OpenBSD en particular por su elevada seguridad y bajos requerimientos para un funcionamiento fluido. También tiene una gran cantidad de información en Internet para resolver los distintos problemas que se vayan presentando.

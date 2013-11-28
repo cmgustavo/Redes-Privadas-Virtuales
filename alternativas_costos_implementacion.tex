@@ -1,0 +1,548 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   |-------------------------|                        %
+%   |REDES PRIVADAS VIRTUALES |                        %
+%   |                         |                        %
+%   | Proyecto de graduación  |                        %
+%   |_________________________|                        %
+%                                                      %
+%   Autores                                            %
+%   -------                                            %
+%                                                      %
+% * Formoso Requena, Nicolás Federico (CX02-0239-8)    %
+%     nicolasformoso@gmail.com                         %
+% * Cortez, Gustavo Maximiliano (CX01-0801-9)          %
+%     cmgustavo83@gmail.com                            %
+%                                                      %
+%   Tutores                                            %
+%   -------                                            %
+%                                                      %
+% * Ing. Gustavo Vanetta - vanettag@gmail.com          %
+% * Lic. Miguel Bazzano - miguelbazzano@gmail.com      %
+%                                                      %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% ********* Alternativas y costos de implementación ********** %
+
+\chapter{Alternativas y costos de implementación}
+\label{chap:alternativas_costos_implementacion}
+
+Ningún paquete de software que se ha visto a lo largo de este informe puede afrontar todos los problemas y requisitos posibles que se pueden encontrar al implementar una red privada virtual. En este capítulo se plantean y describen brevemente las soluciones alternativas (o complementarias en algunos casos) a los estándares descriptos y probados anteriormente.
+
+Además se plantearán los criterios que se utilizan al evaluar la mejor solución VPN para una determinada empresa, junto a los costos de instalación y mantenimiento del sistema. Esto puede variar con el país, región, tamaño de la empresa, alcance de la VPN, seguridad requerida, entre muchos otros factores que intervienen en cada caso. También se evaluarán las diferentes soluciones en cuanto a costos y las mejoras que implicarían su implementación.
+
+\section{Soluciones comerciales}
+\label{sec:alternativas_soluciones_comerciales}
+
+Dentro de la amplia gama de posibilidades que existen para implementar seguridad en las redes utilizando VPNs, existen por supuesto, las soluciones comerciales de hardware propietario. 
+
+VPNC~\footnote{Más información: http://www.vpnc.org}, es el Consorcio VPN. Un grupo de fabricantes que analiza y certifica los productos VPN comerciales. Básicamente, VPNC ofrece informes de compatibilidad de los productos de sus miembros. Este consorcio ha sido de gran ayuda para la cooperación entre las empresas, y para que dichos productos sean diseñados en base a los estándares de internet.
+
+En las siguientes secciones se describirán brevemente los equipos que ofrecen soluciones VPN de las empresas más importantes en cuanto a redes y seguridad.
+
+\subsubsection{Cisco ASA 5500 Series SSL/IPsec VPN Edition}
+
+Es un servidor VPN que ofrece acceso a la red corporativa tanto a usuarios móviles, oficinas remotas, clientes, etc. Se integra en el equipo funcionalidad de firewall, que detecta usuarios no autorizados y seguridad a la red.
+
+Existen varios modelos dentro de la serie; diferenciándose en el número de conexiones simultáneas admitidas, que van desde 10 hasta 10.000. Por supuesto que el costo de los equipos, también crece con el número de usuarios que admiten al mismo tiempo.
+
+Por ejemplo, la licencia para un equipo que admite veinticinco conexiones VPN (modelo ASA5500-SSL-25), llega a US\$ 2,682.53 (precio de Estados Unidos).
+
+\subsubsection{Cisco VPN 3002 Hardware Client - pasarela VPN}
+
+Es un dispositivo separado del computador, que funciona con todos los sistemas operativos, ya que no interfiere con el procesamiento del ordenador. Se utiliza para comunicar a los clientes VPN con la red corporativa de su empresa. Este equipo está preparado para conectar desde estaciones de trabajo, hasta servidores, impresoras, etc.
+
+El coste de este producto es de US\$598,00.
+
+\subsubsection{Linksys RV082}
+
+Ruteador con conexión a Internet compartida de alta fiabilidad y conmutador de ocho puertos para negocios pequeños; Consta de puertos de Internet duales para el equilibrio de carga y conexiones redundantes. Conecta de forma segura hasta cincuenta usuarios (de QuickVPN) remotos o itinerantes a la red de su oficina mediante una VPN. Soporta también cinco conexiones PPTP. 
+
+El coste en Argentina de este router es de US\$514,00.
+
+\subsubsection{Router Draytek Vigor 2930}
+
+Un equipo similar al anterior. Posee 4 puertos LAN y 2 WAN para balanceo de carga. Tiene capacidad para soportar hasta cien túneles VPN; soporta protocolos IPSec/PPTP/L2TP. Posee firewall, entre otras características.
+
+El coste en Argentina de este router es de US\$375,00.
+
+\section{Soluciones alternativas}
+\label{sec:alternativas_soluciones_alternativas}
+
+Actualmente existen varias soluciones alternativas a las escritas en este informe y a las soluciones comerciales de grandes empresas. En esta sección se harán mención de dichas soluciones que pueden ser gratuitas o de libre distribución, pero no estándar en el mundo de las redes privadas virtuales.
+
+En cuanto a las aplicaciones gratuitas que existen para establecer una VPN entre dos puntos, la más conocida por los amantes de los juegos en red, es \emph{LogMeIn Hamachi}. Otra solución que se puede encontrar, más orientado al acceso a escritorio remoto es \emph{DESKTRA} (Virtual Private Desktop).
+
+Finalmente se pueden rescatar algunos proyectos de código abierto que intentan implementar una red privada virtual minimizando la tarea de configuración y administración, sacrificando importantes características en cuanto a performance y seguridad de una red corporativa.
+
+\subsection{LogMeIn Hamachi}
+
+Hamachi es un servicio de VPN basado en paquetes UDP que se instala cada equipo (funciona en Windows, MacOSX y Linux) y permite la conexión rápida y segura de los mismos de manera que parezcan estar en una misma red.
+
+De las características que tiene, la que más se destaca es su facilidad de uso. Nada más crear una red e invitar a otros equipos (mediante contraseña) a unirse, o directamente ingresar en una red previamente creada por algún otro usuario. Por su parte, la lista oficial de características son las siguientes:
+
+\begin{itemize}
+	\item Permite compartir archivos y carpetas mediante \gls{SMB}.
+	\item Funciona sin tener que configurar firewall.
+	\item Utiliza cifrado y autenticación.
+	\item Gratuito para uso no comercial.
+\end{itemize}
+
+\subsubsection{Funcionamiento}
+
+En el momento de instalar el software, se crea una interfaz de red virtual en el sistema, que va a realizar el tunelado de la información que se envíe por la VPN (o a través del software en este caso).
+
+Cada cliente establece una conexión de control con el cluster servidor, en el que realiza una secuencia de identificación de usuario, seguida de un proceso de descubrimiento y sincronización de estado. El descubrimiento es utilizado para determinar la topología de la conexión a Internet del cliente, es decir, si se encuentra tras un firewall o servidor NAT. El paso de sincronización se realiza para ver los clientes conectados a la misma red.
+
+Cuando se conectan o desconectan clientes, el servidor emite instrucciones a los otros nodos de la red para que inicien o detengan túneles con el cliente. Cuando se establecen túneles entre los nodos, Hamachi utiliza una técnica de NAT transversal asistido por servidor, similar a ``UDP hole punching'' (perforadora de agujeros UDP).
+
+En algunas configuraciones NAT no esta garantizado el funcionamiento de Hamachi, que según su desarrollador, atraviesa con éxito el 95 por ciento de conexiones P2P.
+
+Hamachi asigna a cada cliente una dirección IP de la red 5.0.0.0/8, que al autenticarse por primera vez se le asigna una dirección única y luego se la asociada con la clave de cifrado pública del cliente.
+
+\subsubsection{Utilidad}
+
+Como se ha mencionado anteriormente, Hamachi se utiliza habitualmente para juegos en red y para la administración remota. De esta manera, cada usuario que se conecte mediante el cliente, puede crear una nueva red, para jugar partidas en línea con juegos que solamente funcionan en redes LAN. La Figura \ref{fig:alternativas_hamachi_1} muestra la interfaz de usuario para crear una nueva red. La interfaz para conectarse a una red existente es similar.
+
+\begin{figure}[htb]
+	\begin{center}
+	\includegraphics{imagenes/hamachi_1}
+	\caption{Interfaz de usuario de Hamachi para crear una nueva red.}
+	\label{fig:alternativas_hamachi_1}
+	\end{center}
+\end{figure}
+
+La utilización de contraseña solamente se usa para evitar conexiones no deseadas, de manera que se puede distribuir la contraseña (como si de una clave pública se tratara) entre los usuarios de confianza para que puedan acceder a la red.
+
+\subsection{DESKTRA Virtual Private Desktops}
+
+Este software que se distribuye de forma gratuita para usos no comerciales, permite la conexión a escritorios remotos utilizando técnicas que se utilizan en las VPN.
+
+Se puede considerar DESKTRA como un software \gls{VNC}, pero difiere en las siguientes características principales (algunas comunes a VNC):
+
+\begin{itemize}
+	\item Protección por contraseña.
+	\item Encriptación mediante AES (Advanced Encryption Standard).
+	\item No requiere modificación en el firewall ni en el sistema.
+\end{itemize}
+
+La desventaja de este sistema es que solamente funciona en equipos con Windows y que además deben instalarse dos paquetes de software, el cliente en un extremo y el servidor en otro. Esto puede resultar poco práctico, ya que si se quiere conectar a un escritorio remoto, la mejor solución estándar es utilizar VNC.
+
+Su difusión es muy limitada, principalmente por la desventaja descripta anteriormente y además por las mejores alternativas que existen en el mercado.
+
+\subsection{VTun}
+
+VTun o túnel virtual es una solución VPN escrita por Maxim Krasnyansky, que utiliza interfaces de túneles en los que los datos se cifran al entrar en el túnel y se descifran al salir por el túnel del otro extremo.
+
+Su funcionamiento se basa en encapsular paquetes dentro de paquetes IP y utilizar redes IP para encaminar dichos paquetes encapsulados de una extremo a otro del túnel. Cada extremo tiene información sobre el otro, como la dirección de red legible y la red que esta detrás. De esta manera, si un paquete llega con destino a la red que se encuentra del otro lado del túnel, se lo encamina por la interfaz del túnel local.
+
+El kernel es el encargado de encapsular y redireccionar el nuevo paquete a la dirección conocida del otro extremo del túnel.
+
+\subsubsection{Funcionamiento}
+
+VTun utiliza el driver TUN/TAP como punto de acceso lógico al túnel. De esta manera, los paquetes encaminados al driver creado, en realidad viajan al otro extremo del túnel. La siguiente salida en pantalla muestra la denominación de la interfaz que crea el sistema para realizar este tipo de conexiones:
+
+\begin{listing}[style=consola, numbers=none]
+tun0: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1492
+        groups: tun egress
+        inet 190.30.82.251 --> 200.3.60.15 netmask 0xffffffff
+\end{listing}
+
+En el ejemplo anterior se puede ver que la interfaz utilizada recibe la dirección IP local y del router, que se utiliza al establecer una conexión con el proveedor de acceso a Internet. Esto no representa una creación de VTun pero es un ejemplo aproximado.
+
+VTun utiliza un \textsl{daemon} de ejecución denominado \texttt{vtund} que es el responsable de la inicialización y recepción de las conexiones de los túneles, además del mantenimiento de cualquier túnel establecido. Puede trabajar en modo servidor o cliente, según sea su configuración. Si se lo configura en modo servidor, este espera conexiones entrantes de los clientes y enviará los parámetros de túnel configurados de vuelta al cliente. Si en cambio se lo configura en modo cliente, el \textsl{daemon} intentará iniciar una conexión de túnel con el servidor especificado.
+
+\subsubsection{Métodos de cifrado}
+
+En cualquier implementación de VPN, es importante que tener presente tanto el cifrado como la autenticación de los datos para asegurar el máximo nivel de seguridad e integridad de dichos datos.
+
+VTun utiliza OpenSSL para implementar el cifrado y la autenticación, aunque para el cifrado específicamente se utiliza el algoritmo Blowfish (desarrollado por Bruce Schneier), diseñado para ser muy rápido y eficiente. Esto lo hace ideal para VTun, porque los paquetes deben cifrarse y descifrarse rápidamente, sin introducir latencia adicional en una conversación entre redes.
+
+Blowfish es un algoritmo simétrico, lo que significa que utiliza la misma clave para cifrar y para descifrar los datos.
+
+Para la protección de la integridad, VTun utiliza md5 para crear una dispersión de clave de 128 bits a partir de una frase clave (los datos).
+
+Para mejorar la seguridad, cuando un cliente se autentica en el servidor, se utiliza la autenticación basada en desafíos, que utiliza una secuencia como sigue:
+
+\begin{enumerate}
+	\item El cliente inicia la conexión con el servidor.
+	\item El servidor realiza un desafío que consiste en cifrar algunos datos aleatorios con la clave secreta que ambos comparten, y se los envían al cliente.
+	\item El cliente lo recibe y descifra con la clave secreta, calcula una dispersión de los datos aleatorios y se la envía al servidor.
+	\item El servidor recibe estos datos y los compara con un \emph{hash} de los datos enviados originalmente. Si coinciden, el cliente queda autenticado, sino lo rechaza.
+\end{enumerate}
+
+\subsubsection{Túneles soportados}
+
+VTun soporta cuatro diferentes tipos de túneles, que dependen del tipo de VPN que se quiera implementar, los túneles IP, ethernet, en serie y pipe.
+
+Los túneles pueden utilizar TCP o UDP para el transporte. Si se utiliza TCP se tiene más sobrecarga de conexión, pero garantiza la entrega de datos. Esto se puede solucionar añadiendo algún tipo de compresión.
+
+Por otra parte, si se utiliza UDP se tienen túneles más rápido que con TCP y utilizan menos ancho de banda. El problema es que no garantizan la entrega de paquetes, ni tiene mecanismos de control de flujo, por lo que los paquetes VPN deberían implementar estas características sobre UDP.
+
+Los \emph{túneles IP} transportan sólo tráfico IP, y se los puede utilizar para establecer conexiones red a red y host a red. En cambio los \emph{túneles ethernet} se utilizan para crear túneles que transportan tramas \emph{ethernet}, de manera que no solo pueden enviar paquetes IP, sino cualquier otro protocolo que se ejecute de forma nativa sobre \emph{ethernet}, como IPX. Los túneles IP utilizan la interfaz TUN, mientras los túneles ethernet utilizan TAP.
+
+Los \emph{túneles en serie} utilizan \gls{PPP} o SLIP para ofrecer conexión PPP virtual de un extremo del túnel al otro. En este modo no es necesario utilizar el soporte TUN/TAP del kernel, ya que PPP provee de su propia interfaz de red.
+
+Los \emph{túneles pipe} son una especie de implementación similar al pipe de los sistemas Unix, que se utilizan sin necesidad de levantar una interfaz de red, y pueden ser útiles para transportar archivos directamente entre dos equipos VTun.
+
+Finalmente se puede decir que VTun es una buena solución para establecer rápidamente una VPN red a red o host a red, con poca utilización de recursos del sistema y además compatible con varias plataformas (Linux, OpenBSD, Solaris, etc.). Sin embargo, a pesar de estar basado en varios estándares, VTun no es compatible con los demás protocolos de túnel, que se debe a la forma en que el cliente y el servidor inician las conexiones.
+
+\subsection{cIPe}
+
+El paquete cIPe (Crypto IP Encapsulation) es sencillo y rápido, y ofrece la posibilidad de crear túneles para enviar paquetes IP cifrados sobre UDP.
+
+cIPe consta de un módulo del kernel y una utilidad de administración a nivel de usuario como daemon (\texttt{ciped}).
+
+El módulo del kernel realiza varias operaciones relacionadas con la manipulación de los paquetes IP, como su transmisión y recepción y su cifrado utilizando cifrado simétrico. El módulo crea un dispositivo de red virtual que se puede configurar y rutear de la misma manera que los demás dispositivos.
+
+La utilidad a nivel de usuario sirve para realizar el intercambio de claves y configurar el paquete cIPe. Este soporta dos cifrados simétricos, \emph{Blowfish} e \emph{IDEA}, y además se puede encapsular IP sobre IP o como túnel de paquetes OSI de capa 2 (\emph{ethernet}, por ejemplo).
+
+Entre las desventajas de cIPe se encuentra su bajo nivel de utilización debido a su complejidad de uso y configuración, además que solo implementa dos algoritmos simétricos, uno de ellos patentado. Por otro lado, al no tener tanta información sobre la implementación, ni medidas de rendimiento y análisis de seguridad, hacen que su utilización sea muy limitada y poco seria para entornos profesionales que requieren de un determinado grado de seguridad en sus redes.
+
+Sin embargo, cIPe se considera un proyecto de código abierto en crecimiento y con una buena integración con los sistemas operativos Linux, que de alguna manera (si se mejoran los aspectos negativos) puede llegar a ser utilizado de forma masiva.
+
+\subsection{tinc}
+
+\texttt{tinc} es un paquete ligero que ofrece funcionalidad VPN básica, disponible para Linux, BSD y Solaris, que se distribuye de forma libre bajo licencia GPL de GNU. Fue diseñado para trabajar totalmente en el espacio del usuario, de manera que los errores en la implementación no causarán que el kernel falle.
+
+\texttt{tinc} utiliza Blowfish en modo CBC como cifrado simétrico, y para obtener las claves para este cifrado, utiliza algoritmos asimétricos de clave pública (como RSA).
+
+Los protocolos subyacentes que utiliza para el transporte son TCP y UDP, en el que transmite información de control y datos, respectivamente.
+
+Una de las características interesantes de \texttt{tinc} es el soporte de ruteo automático entre las distintas subredes que componen la VPN, ahorrando el trabajo que se tendría que hacer para configurar las rutas.
+
+Nuevamente, al tratarse de un paquete en constante desarrollo por entusiastas en sus tiempos libres, se carecen de muchas características como para competir con grandes jugadores como IPSec. Además resulta poco documentado y con poca información sobre su rendimiento y análisis de seguridad.
+
+\section{Situación real de ejemplo}
+\label{sec:alternativas_ejemplos}
+
+En esta sección, una empresa ficticia desea incrementar la seguridad de sus redes. Durante el análisis se detallarán los factores a tener en cuenta. Entre ellos se encontrarán la dispersión de las redes, la necesidad de clientes móviles, la disponibilidad de conexión a Internet por banda ancha, entre otros.
+
+Además se plantearán situaciones reales que pueden presentarse al configurar una VPN para la empresa de ejemplo. Los costos y alternativas económicas son también parte de esta sección.
+
+\subsection{Escenario}
+
+La empresa \emph{Empresa Ejemplo S.A.} posee una casa central, ubicada en San Miguel de Tucumán, y dos sucursales; \emph{Sucursal Uno} que se encuentra en Salta (capital), y \emph{Sucursal Dos} emplazada en San Fernando del Valle de Catamarca. También tiene empleados itinerantes, que se conectan al sistema de gestión de la central y a la base de datos de alguno de los tres puntos fijos.
+
+Luego de que la empresa sufriera ingresos no autorizados en una de sus redes, se dispuso contratar a una consultora para encontrar una solución a sus comunicaciones.
+
+Los encargados de evaluar el funcionamiento de las redes de \emph{Empresa Ejemplo S.A.}, se encontraron con los siguientes problemas:
+
+\begin{itemize}
+	\item La seguridad de la empresa no está totalmente consolidada. Se siguen utilizando algunos protocolos no seguros para la comunicación entre los empleados de las sucursales, por ejemplo SMTP y POP, con el servidor de correo de la casa central.
+	\item \emph{Empresa Ejemplo S.A.} tiene muchos puertos de servicios abiertos hacia internet, que solo son utilizados por sus empleados itinerantes, o clientes. Esto eleva el nivel de vulnerabilidad.
+	\item Los datos de los clientes de \emph{Empresa Ejemplo S.A.} están dispersos entre la casa central y sus sucursales (no hay centralización de datos), por lo que los empleados necesitan mucho tiempo para realizar su trabajo, ya que a veces requieren información que se encuentra en otra sucursal.
+	\item El número de empleados itinerantes creció en el último año, por lo que algunos de ellos tienen problemas para conectarse a la empresa, debido a una sobrecarga del servidor. Sumado a esto, el protocolo que utilizan para la comunicación no es seguro.
+\end{itemize}
+
+La Figura \ref{fig:alternativas_vpn1} muestra el modo actual de conexión de las sucursales y de los usuarios móviles; que se conectan a través de Internet.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{imagenes/costos/esc_ej_internet}
+\caption{Escenario de conexión a Internet de Empresa Ejemplo S.A.}
+\label{fig:alternativas_vpn1}
+\end{figure}
+
+\subsection{Relevamiento}
+
+Al realizar el relevamiento de Empresa Ejemplo S.A. se obtuvo información de la situación, luego se presentaron las opciones para la solución o mejora de las fallas encontradas; también se procedió a  documentar el proceso.
+
+\subsubsection{Equipamiento}
+
+Se puede comenzar con el equipamiento de la casa central y las sucursales. En la casa central se cuenta con terminales \emph{Workstation HP xw8600} y dos servido\emph{HP ProLiant ML100} que se utilizan para servidor de archivos y aplicaciones, y para servicios Web y correo electrónico. Los terminales de usuarios cuentan con el sistema operativo Microsoft Windows Vista Home Premiun preinstalado, mientras que los servidores tienen Windows Server 2007 en cada equipo.
+
+Las otras dos sucursales, cuentan con los mismos equipos para terminales de usuarios, pero con un solo servidor HP ProLiant ML100 en cada local. Cada servidor se utiliza para la conexión a Internet y para el reparto de correo electrónico local.
+
+Los usuarios móviles de Empresa Ejemplo S.A. generalmente se conectan a la casa central mediante la interfaz Web en busca de información para los clientes, dado que rara vez se puede utilizar la conexión a escritorio remoto, porque se trata de un servicio que no debería estar disponible en Internet las 24 horas del día.
+
+\subsubsection{Comunicaciones}
+
+En cuanto al esquema de conexión, la casa central cuenta con ADSL simétrico de 3 Mbps, y las sucursales con ADSL común de 1 Mbps, porque no se consideraba que iba a ser necesario comunicarse entre las sucursales, nada más con consultar el servicio Web principal era suficiente.
+
+Para la comunicación se utilizaba un modem router ADSL provisto por el ISP (un Tainet CA81R) para los tres locales. Este aparato cumple la función de NAT y de firewall para la toda la red, y se conecta a un Switch 3Com de 24 bocas en la casa central y de 16 en cada sucursal.
+
+En algunos casos era necesario supervisar la utilización del acceso a Internet de cada empleado, ya que en determinados horarios resultaba imposible trabajar por el alto consumo de ancho de banda que tomaban las terminales con programas P2P durante las descargas.
+
+\subsubsection{Servicios}
+
+En la casa central se tienen servicios básicos de Web y correo electónico en un equipo, mientras que en el otro equipo se cuenta con servidor de archivos, utilizado para la documentación importante de la empresa y limitado a cada usuario protegiéndolo con contraseña.
+
+Si un usuario móvil requiere de un archivo alojado en el servidor, debe solicitar mediante teléfono o correo electrónico que se habilite el servicio por un período de tiempo limitado. Esto es para evitar ingreso de intrusos a la red, ya que es servicio de acceso a escritorio remoto se encontraría disponible para toda la Internet.
+
+En las sucursales se cuentan con servicio de correo electrónico y de archivos en un mismo equipo, ya que no hay tantos terminales conectados al mismo tiempo.
+
+Para obtener acceso a la casa central se ha creado un formulario Web (en el servidor) en el que cada usuario puede modificar y obtener información de productos de la empresa, mediante su nombre y contraseña. Es decir, que el sitio web utilizado por la empresa para mostrar a los clientes, tiene la misma interfaz que la que utilizan sus empleados para obtener y modificar información importante de productos y servicios.
+
+\subsection{Problemas encontrados}
+
+Luego de realizar el relevamiento de Empresa Ejemplo S.A. se encontraron algunos problemas en cuanto a la estructura de la red de la empresa y el manejo de información vital.
+
+En primer lugar se tiene en cuenta que la distancia de la casa central y de las sucursales es tal que produce gran dispersión de la información, como si de varias empresas se trataran. La idea general es unificar este tipo de información para que la empresa se vea identificada por su casa central para mejorar la imagen corporativa.
+
+En segundo lugar, en el acceso a la red, los empleados móviles tienen dificultades para encontrar información precisa para distribuir a sus clientes, ya que no siempre pueden acceder a la red de la empresa, y el formulario Web es demasiado limitado para la mayoría de los casos. Por eso es necesario establecer una política de acceso para los terminales móviles, ya sea mediante el uso de equipos portátiles como de teléfonos móvil.
+
+Finalmente, la administración de los equipos, los servicios y de la red, se hace muy difícil por la dispersión que existe en el sistema de Empresa Ejemplo S.A. Por ejemplo, el correo electrónico de cada sucursal debería unificarse con el servidor central (es decir, cada sucursal tiene su correo, pero son redireccionados al servidor central), de la misma manera que el servidor de archivos, para que la seguridad sea fortalecida en un solo lugar. De esta manera se evita la redundancia de la información, que se repite en las sucursales y en la casa central, y la actualización de los mismos deben hacerse mediante copias de los archivos a cada sucursal, haciendo el trabajo menos dinámico y más tedioso.
+
+\subsection{Recomendaciones}
+
+Luego de conocer la situación actual de Empresa Ejemplo S.A. se procede con el listado de recomendaciones realizadas por expertos en seguridad e infraestructura de red.
+
+\subsubsection{Infraestructura y equipos}
+
+En cuanto al equipamiento de Empresa Ejemplo S.A. se cuenta con equipos relativamente nuevos, tanto en las terminales como en los servidores, por lo que no es necesaria la adquisición de nuevas máquina.
+
+En la casa central y en las sucursales, se utilizan Switches y cables de buena calidad; se tiene una buena distribución de los cables por sus correspondientes cable-canal. Es decir, en cuanto a materiales, se cuenta con las mejores opciones; el problema esta en la arquitectura funcional de la red y distribución de servicios.
+
+\subsubsection{Información vital}
+
+Para proteger la información crítica para el funcionamiento de la empresa, se han planteado las siguientes opciones:
+
+\begin{itemize}
+	\item \emph{Opción 1:} Centralizar la información en la base de datos de la casa central. Instalar un servidor de backup en cada sucursal. Todos los empleados \textendash incluso los de las sucursales \textendash ingresarán a la base de datos de la casa central para obtener la información que necesitan.
+	\item \emph{Opción 2:} Centralizar la información en la base de datos de la casa central. Pero crear servidores espejo en ambas sucursales, para ahorrar tiempo en el acceso a los datos necesarios por los empleados.
+\end{itemize}
+
+De entre ambas opciones, se escoge la primera, ya que la segunda tiene la desventaja que al momento de la sincronización se consume mucho ancho de banda, por que la frecuencia de actualización de los servidores espejo debe ser mayor que la de los servidores backup.
+
+\subsubsection{Servicios de red}
+
+Crear en la casa central una \gls{DMZ}, donde se ubiquen los servicios al público en general: servicio web por el momento. Quitar todos los que puedan ofrecer algún tipo de vulnerabilidad.
+
+Los servicios necesarios para los empleados, como por ejemplo el servicio de correo, Web, el sistema de gestión, y demás, serán accedidos desde dentro de la red local, o desde una conexión no accesible al público en general. En la Figura \ref{fig:alternativas_vpn2} vemos cómo sería el esquema de red de la casa central.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{imagenes/costos/esc_ej_cc}
+\caption{Infraestructura de la red de la casa central.}
+\label{fig:alternativas_vpn2}
+\end{figure}
+
+Las sucursales no poseerán servicios públicos, estos solo se brindarán desde la central.
+
+\subsubsection{Conexión a Internet}
+
+Cada una de los puestos fijos accederá a Internet a través de un proveedor local. La casa central debe tener dirección IP fija, mientras que en las sucursales esto no es necesario. 
+
+El servidor Dynamic DNS de la central resolverá los nombres de de las sucursales (si es necesario).
+
+\subsubsection{Conexión con la Casa central}
+
+Cada una de las sucursales se comunicarán directamente con la casa central, pero entre ellas no habrá comunicación directa, ya que esto provocaría una sobrecarga administrativa de la red, que es mayor al aprovechamiento que se le da. La conexión inalámbrica no es una opción en este caso debido a la distancia que hay entre los lugares a comunicar, por lo que queda descartada. Las opciones son las siguientes:
+
+\begin{itemize}
+	\item \emph{Opción 1:} Alquilar dos líneas, para conectar la central con cada una de las sucursales. Con esto se gana en privacidad y seguridad. 
+	\item \emph{Opción 2:} Establecer conexiones VPN sobre las conexiones a Internet existentes, entre la central y cada una de las sucursales. El tráfico viajará por la red pública, pero encriptado; si se implementan bien los servidores VPN, no habrá mayores problemas con respecto a la seguridad.
+\end{itemize}
+
+La opción que se adopta, es la segunda. Debido a que, si bien la primera ofrece mayor seguridad, por otro lado es mucho más costosa, y posee la desventaja que si el enlace se corta en algún punto entre los nodos, puede haber gran retardo en restablecer la comunicación.
+
+La Figura \ref{fig:alternativas_vpn3} muestra detalles de la infraestructura de red de las sucursales.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{imagenes/costos/esc_ej_suc}
+\caption{Infraestructura de la red de las sucursales.}
+\label{fig:alternativas_vpn3}
+\end{figure}
+
+\subsubsection{Empleados itinerantes y remotos}
+
+Se hizo un estudio para averiguar cuántos empleados se conectaban remotamente a la casa central y cuántos a las sucursales. Se halló que en la primera el máximo de conexiones simultáneas es de diez (en promedio), y en las sucursales es de cinco (también en promedio).
+
+Debido a que ahora los datos estarán centralizados en la oficina principal de la empresa, las conexiones VPN de los empleados remotos se establecerán solo con este lugar. 
+
+Se implementará soporte para veinticinco conexiones VPN para usuarios remotos, simultáneamente a la central. Con esto se da un margen de cinco conexiones extra.
+
+\subsubsection{Recursos compartidos a clientes}
+
+Los clientes necesitan acceder a la empresa vía web para obtener información de sus estados de cuentas, pagos, entre otra información crítica. Dicha información es privada, y necesita de un modo seguro de transmisión, para que no pueda ser obtenida por un curioso. Las opciones que se proponen son las siguientes:
+
+\begin{itemize}
+	\item \emph{Opción 1:} Habilitar conexiones VPN host-red para cada uno de los clientes que necesiten acceder a nuestra red de forma segura.
+	\item \emph{Opción 2:} Aprovechando que en la DMZ hay un servidor web público, y que los clientes solo necesitan acceso www, puede habilitarse soporte HTTPS en dicho servidor, esto es, tráfico HTTP encriptado con SSL, de modo que el tráfico de paquetes no circule en texto claro.
+\end{itemize}
+
+La mejor opción en este caso, es la segunda, ya que se evita una sobrecarga de conexiónes VPN innecesarias y poco productivas, y que solo provocarían una baja en el rendimiento de los servidores. También se aprovecha algo que existe, de un modo muy sencillo: el servidor web público.
+
+\subsubsection{Administración de las redes}
+
+Suprimir la administración de red individual de las sucursales. Establecer una administración cen\-tra\-li\-za\-da de los tres puntos fijos en la casa central, para simplificar el control y mantenimiento de las redes.
+
+Cada una de las sucursales poseerá una puerta de acceso VPN únicamente para acceso administrativo de esta índole.
+
+\subsection{Comparativa de costos}
+\label{subsec:comparativa_costos}
+
+Para realizar una comparativa de costos, antes se deben conocer las opciones disponibles para ofrecer lo mismo, pero con diferentes soluciones.
+
+En cuanto a las opciones, no existe tanta variedad para el mismo costo de instalación y mantenimiento, ya que puede variar para el tamaño de una empresa como en la complejidad de la red que se quiera implementar. Además como las entidades buscan en general disminuir gastos, se optan por soluciones económicas que pueden estar relacionadas con software libre o con aparatos de gama media de Linksys o 3Com. Por el contrario, si la empresa puede gastar más dinero, entonces buscan la misma solución en compañías como Cisco.
+
+En cuanto a los requisitos mínimos para implementar una solución VPN, no se van a incluir dentro del costo de la configuración y mantenimiento de la VPN propiamente dicha, sino que se considera que es un gasto que la empresa debe asumir para poder invertir en una mejor solución. De esta manera, se van a plantear solamente los costos de la instalación, configuración y mantenimiento de una VPN, que en algunos casos puede ir incluido con el equipamiento, pero en Empresa Ejemplo S.A. no será necesario porque ya disponen de equipos suficiente.
+
+En algunos casos en los que se pretende gastar menos dinero en implementación, se puede optar por soluciones híbridas. Es decir, en la casa central se instala un equipo medianamente potente, mientras en las sucursales se opta por routers que sean compatibles con la implementación de IPSec con Linux u OpenBSD.
+
+\subsubsection{Costos de comunicación}
+
+Hace un tiempo, el reino de las comunicaciones las tenían las líneas telefónicas tradicionales de cable de cobre. Luego los requerimientos fueron cambiando y las comunicaciones se volvieron inalámbricas o satelitales, sin la intervención de cables.
+
+En la actualidad, se sigue utilizando la línea telefónica tradicional pero con una nueva tecnología que permitía la conexión a Internet a alta velocidad, es el ADSL. De esta manera, nace una nueva alternativa a las líneas ``dedicadas'', que se empleaban para la conexión de redes privadas virtuales mediante un canal independiente y de ancho de banda bajo demanda, que es la VPN a través de Internet.
+
+En cuanto a los costos de la comunicación, se tiene una gran variedad de soluciones, que van desde líneas dedicadas con \emph{framerelay} a muy alto precio, hasta la conexión a Internet hogareña bastante más económica.
+
+Una opción media que se utiliza actualmente y que es la requerida en casa central de Empresa Ejemplo S.A., es el denominado \emph{ADSL simétrico}. Esta tecnología permite la misma tasa de transferencia de subida como de bajada de datos. Por ejemplo un servicio de 1 Mbps con direcciones IP fijas puede tener un costo de US\$300,00 aproximadamente, que es mucho más que un ADSL común de 5 Mbps, pero bastante menos que una línea dedicada, que puede superar los US\$900,00.
+
+\subsubsection{Costos con software libre}
+
+Como en general los clientes que solicitan un servicio requieren una solución completa, en este caso, luego del relevamiento correspondiente y del análisis de la infraestructura de la red, no es necesario proveer de equipamiento, por lo que el costo se reduciría solamente a la instalación de los sistemas y configuración de la VPN.
+
+Los precios por la instalación de un concentrador VPN con software libre, van desde los \$2.000,00 (pesos argentino) como base aproximadamente, dependiendo de la complejidad del sistema y de la importancia del tráfico a transmitir (con respecto a la disponibilidad). Esto se mide de acuerdo a si es necesario que la VPN se encuentre activa las 24 horas del días, todos los días de la semana, etc.
+
+En este caso, para la Empresa Ejemplo S.A. que requiere conectividad con las demás sucursales para realizar el backup diario, de las transferencias realizadas durante la jornada laboral, se debe tener en cuenta la disponibilidad del sistema.
+
+De esta manera, los elementos importantes a tener en cuenta para realizar un presupuesto serían los siguientes:
+
+\begin{itemize}
+	\item Instalación y configuración del sistema (Linux u OpenBSD).
+	\item Seguridad adicional por software.
+	\item Disponibilidad del sistema.
+	\item Cantidad de enlaces punto a punto.
+	\item Soporte a usuario móviles.
+	\item Cantidad de servicios para administrar.
+	\item Copias de seguridad en horarios que no se utilice el servidor.
+\end{itemize}
+
+Como los servicios que se pueden administrar son numerosos, en el siguiente listado se muestran los requeridos por Empresa Ejemplo S.A.:
+
+\begin{itemize}
+	\item Servicio Web.
+	\item Servicio de Base de Datos.
+	\item Servidor DNS.
+	\item Servicio de correo electrónico.
+	\item Servidor de archivos.
+\end{itemize}
+
+Por consiguiente, es posible calcular el costo total, a partir del precio base, que incluye:
+
+\begin{itemize}
+	\item Configuración de un enlace punto a punto (extremo servidor).
+	\item Soporte a usuarios móviles (cuya cantidad depende de la capacidad del equipo).
+	\item Servidor DNS.
+\end{itemize}
+
+Al agregar los servicios Web, de correo electrónico, base de datos y de archivos, el costo se incrementa a \$2.000,00, mientras que la configuración de copias de seguridad diaria suman \$1.000,00.
+
+Por otra parte, el tema de la disponibilidad del sistema, tiene que ver con el soporte y mantenimiento mensual de la VPN, que puede variar (dependiendo del grado de disponibilidad) entre \$1.000,00 y \$3.000,00.
+
+La Tabla \ref{tab:costos_softlibre} muestra detalladamente el costo estimado de cada servicio junto al monto total.
+
+\begin{table}[htb]
+\begin{center}
+	\begin{tabular}{l l l l l}
+		\hline
+		Servicio         & Cantidad & Precio Unitario & Precio total          \\
+		\hline
+		Instalación      & 1        & \$500,00        & \$500,00              \\
+		Disponibilidad   & Diario   & n.d.            & \$2.000,00            \\
+		Enlaces P2P      & 2        & \$1.000,00      & \$2.000,00            \\
+		Móvil            & 25       & n.d.            & \$1.000,00            \\
+		Backup           & Diario   & n.d.            & \$1.000,00            \\
+		Web              & 1        & \$500,00        & \$500,00              \\
+		DB               & 1        & \$500,00        & \$500,00              \\
+		DNS              & 1        & \$250,00        & \$250,00              \\
+		E-Mail           & 1        & \$500,00        & \$500,00              \\
+		Archivos         & 1        & \$250,00        & \$250,00              \\
+		\hline
+		Total            &          &                 & \textbf{\$8.500,00}   \\
+		\hline
+	\end{tabular}
+\end{center}
+\caption{Costos de la implementación de una VPN con software libre.}
+\label{tab:costos_softlibre}
+\end{table}
+
+En cuanto al costo mensual, la variación del precio esta fuertemente relacionada con la disponibilidad del servicios y las copias de seguridad que se realicen. Por esta razón, como se ha mencionado anteriormente, el costo de mantenimiento mensual puede variar entre \$1.000,00 y \$3.000,00.
+
+Este es el caso para la casa central. En las sucursales, el gasto siempre es menos, ya que los servicios que se administran, se encuentran en la casa central.
+
+Para cada sucursal de Empresa Ejemplo S.A. ya se ha calculado el precio por los enlaces, por lo que solamente se suma en el precio la instalación y configuración del sistema, junto al mantenimiento del mismo. De esta manera se adiciona \$1.000,00 para cada servidor de cada sucursal.
+
+De esta manera se estima que el costo total de una solución VPN con software libre sería de \textbf{\$10.500}, que incluye el primer mes de soporte y mantenimiento. Los meses siguientes, se tendría que incluir el mantenimiento de la VPN, de acuerdo a la disponibilidad (que en este caso se considera una disponibilidad media), y las copias de seguridad, con un total de \textbf{\$3.000} mensuales.
+
+\subsubsection{Costos con hardware dedicado}
+
+En cuanto al cálculo de una solución con hardware comercial, el precio varía solamente en el servicio de configuración e instalación de los equipos adquiridos. Los demás servicios tienen el mismo costo establecido anteriormente, es decir, se reemplaza la instalación y configuración del servidor VPN por la solución con hardware propietario.
+
+Para llevar a cabo esta implementación, se utilizan equipos marca \emph{Cisco}, cuyos modelos y precios son los siguientes:
+
+\begin{enumerate}
+	\item Cisco ASA 5510 SSL/IPsec VPN Edition for 50 concurrent SSL VPN users (US\$ 4.500,00).
+	\item 2 Cisco VPN 3002 Hardware Client (US\$ 598,00).
+\end{enumerate}
+
+El primer modelo de la lista anterior es un concentrador VPN que se utiliza como servidor para las conexiones entrantes. Permite por medio de la virtualización, a 250 sesiones concurrentes, 250 sesiones SSL y 50 usuarios concurrentes. Además tiene funciones de firewall para proteger la red de ataques de hackers, malware, troyanos, e incluye bloqueo de aplicaciones P2P para evitar el intercambio de archivos.
+
+El segundo equipo es un dispositivo que funciona en modo cliente junto al concentrador principal, estableciendo la comunicación con el mismo y haciendo funciones de NAT en la red interna, que en este caso, se trata de las sucursales de Empresa Ejemplo S.A. El equipo soporta conexión con el ISP mediante PPPoE, además de NAT transparente para IPSec. De esta manera, se puede obtener un servicio completo de conexión a Internet, además de la conexión segura al servidor VPN mediante el protocolo IPSec.
+
+Volviendo a los costos, cada equipo Cisco mencionados anteriormente, se le tienen que sumar los siguientes servicios:
+
+\begin{itemize}
+	\item Instalación y configuración de los equipos Cisco.
+	\item Seguridad adicional por software.
+	\item Disponibilidad del sistema.
+	\item Cantidad de servicios para administrar.
+	\item Copias de seguridad en horarios que no se utilice el servidor.
+\end{itemize}
+
+En cuanto a la seguridad adicional por hardware se refiere a la utilización de un firewall bajo OpenBSD o Linux, el cual adhiere flexibilidad a la configuración y permite un mayor control de la red interna. Esto se realiza en la casa central, donde la seguridad de los equipos y la utilización de \gls{DMZ} hacen que la opción por software para el firewall sea la más indicada.
+
+De los servicios para administrar, se incluyen los siguientes:
+
+\begin{itemize}
+	\item Servicio Web.
+	\item Servicio de Base de Datos.
+	\item Servidor DNS.
+	\item Servicio de correo electrónico.
+	\item Servidor de archivos.
+\end{itemize}
+
+Estos servicios se implementan en casa central, pero no significa que se integra el mantenimiento del sitio Web corporativo ni el contenido de la base de datos, sino que se cuenta la instalación y configuración de los servicios. El tema de la migración, si se utiliza un sistema diferente en aplicaciones Web y de base de datos, es un caso aparte, que requiere otro proceso de planificación y por lo tanto un precio adicional. En esta situación de ejemplo, se considera que el sitio Web anterior y la base de datos, son fácil de migrar al nuevo sistema.
+
+La Tabla \ref{tab:costos_hardware} muestra el cálculo de costos utilizando esta solución por hardware de una VPN, que además se incluyen servicios con software libre.
+
+\begin{table}[htb]
+\begin{center}
+	\begin{tabular}{l l l l l}
+		\hline
+		Servicio         & Cantidad & Precio Unitario & Precio total          \\
+		\hline
+		Instalación      & 3        & \$300,00        & \$900,00              \\
+		Disponibilidad   & Diario   & n.d.            & \$2.000,00            \\
+		Cisco ASA 5510   & 1        & US\$ 4.500,00   & US\$ 4.500,00         \\
+		Cisco VPN 3002   & 2        & US\$ 600,00     & US\$ 1.200,00         \\
+		Backup           & Diario   & n.d.            & \$1.000,00            \\
+		Web              & 1        & \$500,00        & \$500,00              \\
+		DB               & 1        & \$500,00        & \$500,00              \\
+		DNS              & 1        & \$250,00        & \$250,00              \\
+		E-Mail           & 1        & \$500,00        & \$500,00              \\
+		Archivos         & 1        & \$250,00        & \$250,00              \\
+		\hline
+		Total            &          &                 & \textbf{\$23.666,00}  \\
+		\hline
+	\end{tabular}
+\end{center}
+\caption{Costos de la implementación de una VPN con software libre.}
+\label{tab:costos_hardware}
+\end{table}
+
+Por otro lado, el costo de mantenimiento es el mismo que en el caso anterior, pero no se incluye el soporte que se pueda necesitar en los equipos Cisco, ya que para esto se requiere de agente especializados de dicha empresa. El gasto inicial total con un mes de soporte es de \textbf{\$23.666,00}, con un mensual de \textbf{\$3.000,00}.
+
+\section{Conclusión}
+\label{sec:alternativas_conclusion}
+
+Elegir una solución VPN adecuada no es tarea fácil. Requiere de mucho tiempo de planificación y análisis, ya que se trata de una inversión importante que puede salir muy bien o definitivamente puede ser una pérdida de tiempo y mucho dinero. Esto ocurre, si no se toman todas las precauciones debidas ni se documenta o se entiende el problema; la inversión puede resultar un completo fracaso.
+
+Por esta razón es que al elegir una solución VPN adecuada se debe tener en cuenta una gran cantidad de factores como el económico, la escalabilidad, la transparencia para los usuarios, la mejora de la imagen corporativa, la solución a un problema crítico, etc.
+
+En cuanto a las diferentes soluciones VPN, tanto los equipos comerciales, como las implementaciones en sistemas libres pueden ser muy buenas respecto a su funcionamiento; la diferencia se encuentra en que las implementaciones libres poseen una gran flexibilidad y precio más bajo en comparación con las comerciales; pero estas últimas poseen la ventaja de la optimización del hardware para mejor funcionamiento de las VPN. 
+
+En general, las grandes entidades, al implementar VPN para su tráfico utilizan equipos comerciales, ya que el gasto en un buen equipo se justifica; mientras que las empresas más pequeñas, optan por soluciones libres debido a que la cantidad de recursos con los que cuentan es menor. Es bueno remarcar que, por lo menos en este caso, menor precio no implica necesariamente menor calidad, ya que las implementaciones VPN mediante software pueden competir perfectamente en casi todos los aspectos con las comerciales; incluso siendo una mejor opción a igual precio, en algunos casos.

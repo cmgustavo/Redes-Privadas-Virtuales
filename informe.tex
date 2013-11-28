@@ -1,0 +1,197 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   |-------------------------|                        %
+%   |REDES PRIVADAS VIRTUALES |                        %
+%   |                         |                        %
+%   | Proyecto de graduación  |                        %
+%   |_________________________|                        %
+%                                                      %
+%   Autores                                            %
+%   -------                                            %
+%                                                      %
+% * Formoso Requena, Nicolás Federico (CX02-0239-8)    %
+%     nicolasformoso@gmail.com                         %
+% * Cortez, Gustavo Maximiliano (CX01-0801-9)          %
+%     cmgustavo83@gmail.com                            %
+%                                                      %
+%   Tutores                                            %
+%   -------                                            %
+%                                                      %
+% * Ing. Gustavo Vanetta - vanettag@gmail.com          %
+% * Lic. Miguel Bazzano - miguelbazzano@gmail.com      %
+%                                                      %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% ********* Informe principal ********** %
+
+%% Clase del documento tipo reporte
+\documentclass[a4paper]{report}
+
+%% Paquetes adicionales
+\usepackage[spanish,activeacute]{babel}			% Soporte spanish
+\usepackage[spanish]{translator}
+\usepackage[latin1]{inputenc}		% Entradas con acentos, eñes, etc
+\usepackage{float}					% Para agregar imagenes fijas
+\usepackage{latexsym} 				% Símbolos
+\usepackage{graphicx} 				% Inclusión de gráficos
+\usepackage[pdftex=true,colorlinks=true,plainpages=true]{hyperref} % Soporte hipertexto
+\usepackage{anysize} 				% Soporte para el comando \marginsize
+\usepackage{makeidx} 				% Soporte de indices alfabeticos
+\usepackage[none]{tocbibind} % Agregar bibliografía, indices, etc. al indice general
+\usepackage{color}					% Uso de colores
+\usepackage{listings}				% Para gregar listas personalizadas (codigos)
+\usepackage{array}					% para que funcionen los parámetros m de \begin{tabular}
+\usepackage{alltt}					% Extension de verbatim para usar comandos latex.
+\usepackage{fancyhdr}				% Incluye encabezados y pie de páginas más complejos.
+\usepackage{glossaries}     % Incluye glosario de términos técnicos.
+
+%% Definición de colores grises
+\definecolor{gray99}{gray}{.99}
+\definecolor{gray97}{gray}{.97}
+\definecolor{gray85}{gray}{.85}
+\definecolor{gray75}{gray}{.75}
+\definecolor{gray45}{gray}{.45}
+
+%% Lista personalizada para códigos y configuraciones.
+\lstset{ frame=Ltb,
+     framerule=0pt,
+     aboveskip=0.5cm,
+     framextopmargin=3pt,
+     framexbottommargin=3pt,
+     framexleftmargin=0cm,
+     framesep=0pt,
+     rulesep=.4pt,
+     backgroundcolor=\color{gray97},
+     rulesepcolor=\color{black},
+     stringstyle=\ttfamily,
+     showstringspaces = false,
+     basicstyle=\small\ttfamily,
+     commentstyle=\color{gray45},
+     keywordstyle=\bfseries,
+     numbers=left,
+     numbersep=5pt,
+     numberstyle=\tiny,
+     numberfirstline = false,
+     breaklines=true,
+   }
+ 
+\lstnewenvironment{listing}[1][]
+   {\lstset{#1}\pagebreak[0]}{\pagebreak[0]}
+ 
+\lstdefinestyle{consola}
+   {basicstyle=\scriptsize\bf\ttfamily,
+    backgroundcolor=\color{gray85},
+   }
+   
+\lstdefinestyle{configuracion}
+   {basicstyle=\small\bf\ttfamily,
+    backgroundcolor=\color{gray97},
+   }
+\lstdefinestyle{configuracion_small}	% Lo mismo que arriba pero más chiquito
+   {basicstyle=\footnotesize\bf\ttfamily,
+    backgroundcolor=\color{gray97},
+   }
+
+\lstdefinestyle{TeX}
+   {language=TeX,
+   }
+   
+\lstdefinestyle{bash}
+   {language=bash,
+   }
+
+%% Definición de los códigos, configuraciones y logs flotantes.
+%% Codigos Latex
+\floatstyle{plain}
+\newfloat{codigo}{thb}{lop}
+\floatname{codigo}{Código}
+%% Codigos de configuración
+\floatstyle{ruled}
+\newfloat{configuracion}{thb}{lop}
+\floatname{configuracion}{Configuración}
+%
+\newfloat{configuracion_small}{htb}{lop}
+\floatname{configuracion_small}{Detalle}
+%% Cuadros de registros (logs)
+\floatstyle{boxed}
+\newfloat{logs}{thb}{lop}
+\floatname{logs}{Registro}
+
+%% Definición de los márgenes
+%% {margen_izq}{margen_dch}{margen_sup}{margen_inf}
+%\marginsize{3cm}{2cm}{2.5cm}{2.5cm}
+
+%% Espaciado entre lineas
+%\baselinestretch{2.0}
+
+%% Para la ruptura de palabras
+% \hyphenation{O\-pe\-ra\-ti\-vo}
+\hyphenation{in-me-dia-ta-men-te es-ta-ble-ci-mien-to PPPD co-rres-pon-dien-te trans-fe-ren-cia con-fi-gu-rar cre-ci-mien-to an-te-rior-men-te ad-mi-nis-tra-dor cui-da-do-sa-men-te en-crip-ta-dos Au-then-ti-ca-tion con-si-de-ra-dos in-te-gran-tes de-sa-rro-llo}
+
+%% Encabezados y pie de página
+\pagestyle{headings}
+
+%% Título, autor y fecha
+\title{Investigación e Implementación de Redes Privadas Virtuales}
+\author{\href{mailto:cmgustavo83@gmail.com}{Gustavo Maximiliano Cortez}\\
+\href{mailto:nicolasformoso@gmail.com}{Nicolás Federico Formoso Requena}}
+\date{2008}
+
+% Diccionario de términos técnicos (glosario)
+
+% Generar el glosario por cada entrada nueva, con el comando (vieja no saques esa línea por favor):
+%makeindex -s informe.ist -t informe.glg -o informe.gls informe.glo
+
+\makeglossaries
+\include{glosario}
+
+% Además de incluir la entrada en glosario.tex, hay que referenciarlo con \gls{texto}, sino no aparece. Y ejecutar el comando de arriba para generar.
+
+%%% Sobre el corte de lineas %%%
+%Para LaTeX si se ha cargado el paquete babel basta con la orden
+%\hyphenrules{nohyphenation} --> (no me anduvo)
+%Para TeX hay que hacer las cosas de otra forma. Una forma de conseguir que TeX no corte casi nunca, (y así de paso se evita que corte mal) es poner: 
+\pretolerance=2000
+\tolerance=3000
+
+%%%% Inicio del informe %%%%
+\begin{document}
+\maketitle % Título
+\tableofcontents % Tabla de contenido
+
+%% Introducción.
+\include{funda_introduccion}
+
+%% Realización del proyecto
+\include{realizacion_del_proyecto}
+
+%% Conexión a Internet
+\include{conexion_a_internet}
+
+%% VPN con PPTP
+\include{proto_pptp}
+
+%% VPN con SSH/PPP
+\include{proto_pppssh}
+
+%% VPN con IPSec
+\include{vpn_con_ipsec}
+
+%% VPN con OpenVPN
+\include{vpn_con_openvpn}
+
+%% Comparativas y costos de implementación
+\include{alternativas_costos_implementacion}
+
+%% Conclusión final
+\include{conclusion_final}
+
+%% Apendice
+\include{apendice}
+
+%% Bibliografía
+\include{bibliografia}
+
+% Glosario
+\printglossary[style=altlist]
+
+\end{document}
