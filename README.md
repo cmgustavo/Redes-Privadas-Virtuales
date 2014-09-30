@@ -1,18 +1,19 @@
-Redes-Privadas-Virtuales
-========================
+[![PDF Status](https://www.sharelatex.com/github/repos/cmgustavo/Redes-Privadas-Virtuales/builds/latest/badge.svg)](https://www.sharelatex.com/github/repos/cmgustavo/Redes-Privadas-Virtuales/builds/latest/output.pdf)
+
+# Redes Privadas Virtuales
 
 Tesis de grado, tema: Redes Privadas Virtuales
 
 Atribución-NoComercial 4.0 Internacional (CC BY-NC 4.0)
 
-Autores
--------
+## Autores
 
 * Formoso Requena, Nicolás Federico - nicolasformoso@gmail.com
 * Cortez, Gustavo Maximiliano - cmgustavo83@gmail.com
 
-ESTRUCTURA DE DIRECTORIOS DE TRABAJO
-------------------------------------
+
+## Estructura de directorios
+
 
 * branches		Para armar ramas de la documentacion. Version de Testeo.
 
@@ -28,10 +29,7 @@ ESTRUCTURA DE DIRECTORIOS DE TRABAJO
 			se utilizan para generar el informe final.
 
 
-ESTRUCTURA DE LA DOCUMENTACI”N
-------------------------------
-
-IMPORTANTE!
+## Documentación
 
 No incluir en el control de versiones los archivos auxiliares y de 
 respaldo que utiliza Latex al compilar un documento (poner, ignorar archivos). 
